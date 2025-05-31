@@ -8,11 +8,17 @@ import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:mime/mime.dart'; // To determine mimeType again if needed, or pass it
 import 'package:flutter_markdown/flutter_markdown.dart'; // Import for Markdown rendering
+import 'package:flutter_syntax_view/flutter_syntax_view.dart'; // Import for Syntax Highlighting
 
 class MediaDetailDialog extends StatefulWidget {
   final FileSystemEntity fileEntity;
+  final ThemeMode currentThemeMode;
 
-  const MediaDetailDialog({super.key, required this.fileEntity});
+  const MediaDetailDialog({
+    super.key,
+    required this.fileEntity,
+    required this.currentThemeMode,
+  });
 
   @override
   State<MediaDetailDialog> createState() => _MediaDetailDialogState();
@@ -83,9 +89,15 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
       });
     }
 
-    if (mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) {
-      _textScrollController = ScrollController();
+    // Load text content for JSON, text, or markdown files
+    if (mimeType == 'application/json' || mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) {
       _loadTextContent();
+    }
+
+    // Initialize scroll controller specifically for the text/markdown path that uses MarkdownBody + SingleChildScrollView
+    // JSON will use SyntaxView which handles its own scrolling.
+    if ((mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) && mimeType != 'application/json') {
+        _textScrollController = ScrollController();
     }
   }
 
@@ -293,6 +305,22 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
           if (_audioPlayerState != null) Text('Status: ${_audioPlayerState.toString().split('.').last}'),
         ],
       );
+    } else if (mimeType == 'application/json') {
+      if (_isLoadingTextContent) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (_errorLoadingTextContent.isNotEmpty) {
+        return Center(child: Text(_errorLoadingTextContent, style: const TextStyle(color: Colors.red)));
+      } else if (_textContent != null) {
+        return SyntaxView(
+          code: _textContent!,
+          syntax: Syntax.JSON,
+          syntaxTheme: widget.currentThemeMode == ThemeMode.dark ? SyntaxTheme.vscodeDark() : SyntaxTheme.vscodeLight(),
+          expanded: true, // Fills available space and handles scrolling
+          withLinesCount: true,
+          selectable: true,
+        );
+      }
+      return const Center(child: Text('Loading JSON content...'));
     } else if (mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) {
       if (_isLoadingTextContent) {
         return const Center(child: CircularProgressIndicator());

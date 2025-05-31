@@ -370,7 +370,10 @@ class _MediaHomePageState extends State<MediaHomePage> {
         showDialog(
           context: context,
           builder: (BuildContext context) {
-            return MediaDetailDialog(fileEntity: file);
+            return MediaDetailDialog(
+              fileEntity: file,
+              currentThemeMode: widget.currentThemeMode,
+            );
           },
         );
       },
