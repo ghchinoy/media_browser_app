@@ -42,6 +42,7 @@ dependencies:
   video_thumbnail: ^0.5.3 # Check for the latest version on pub.dev
   video_player: ^2.8.6 # Check for latest
   audioplayers: ^6.0.0 # Check for latest
+  flutter_markdown: ^0.7.1 # Check for latest version on pub.dev
 
 dev_dependencies:
   flutter_test:

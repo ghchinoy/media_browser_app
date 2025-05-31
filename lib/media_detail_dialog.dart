@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:mime/mime.dart'; // To determine mimeType again if needed, or pass it
+import 'package:flutter_markdown/flutter_markdown.dart'; // Import for Markdown rendering
 
 class MediaDetailDialog extends StatefulWidget {
   final FileSystemEntity fileEntity;
@@ -289,7 +290,10 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
           child: SingleChildScrollView(
             controller: _textScrollController,
             padding: const EdgeInsets.all(8.0),
-            child: Text(_textContent!),
+            child: MarkdownBody(
+              data: _textContent!,
+              selectable: true, // Allows text selection
+            ),
           ),
         );
       }
