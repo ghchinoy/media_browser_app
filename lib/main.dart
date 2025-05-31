@@ -87,6 +87,13 @@ class _MediaHomePageState extends State<MediaHomePage> {
   bool _isLoading = false;
   DirectoryNode? _directoryTreeRoot;
   String? _activeFilterPath; // Path of the folder selected in sidenav for filtering
+  bool _isSidenavExpanded = true; // State for sidenav visibility
+
+  void _toggleSidenav() {
+    setState(() {
+      _isSidenavExpanded = !_isSidenavExpanded;
+    });
+  }
 
   Future<void> _pickDirectory() async {
     try {
@@ -488,8 +495,15 @@ class _MediaHomePageState extends State<MediaHomePage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: (_selectedDirectory != null)
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: 'Toggle Folder View',
+                onPressed: _toggleSidenav,
+              )
+            : null,
         title: Text(_selectedDirectory?.split(Platform.pathSeparator).last ?? 'Media Browser'),
-        centerTitle: true, // Add this line to center the title
+        centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(widget.currentThemeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
@@ -506,7 +520,13 @@ class _MediaHomePageState extends State<MediaHomePage> {
       body: Row(
         children: <Widget>[
           if (_selectedDirectory != null && _directoryTreeRoot != null)
-            _buildFolderHierarchySidenav(),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: _isSidenavExpanded ? 250.0 : 0.0,
+              child: ClipRect( // Prevents overflow during animation
+                child: _buildFolderHierarchySidenav(),
+              ),
+            ),
           Expanded(
             child: mainContent,
           ),
