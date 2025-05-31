@@ -26,6 +26,10 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
   bool _isLoadingMetadata = true;
   String _errorLoadingMetadata = '';
 
+  String? _textContent;
+  bool _isLoadingTextContent = false;
+  String _errorLoadingTextContent = '';
+
   String get mimeType => lookupMimeType(widget.fileEntity.path) ?? 'unknown';
   File get file => File(widget.fileEntity.path);
 
@@ -59,6 +63,35 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
           });
         }
       });
+    }
+
+    if (mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) {
+      _loadTextContent();
+    }
+  }
+
+  Future<void> _loadTextContent() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingTextContent = true;
+      _errorLoadingTextContent = '';
+    });
+    try {
+      final content = await file.readAsString();
+      if (mounted) {
+        setState(() {
+          _textContent = content;
+          _isLoadingTextContent = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorLoadingTextContent = "Error reading file content: $e";
+          _isLoadingTextContent = false;
+        });
+      }
+      print("Error reading text file ${file.path}: $e");
     }
   }
 
@@ -188,8 +221,22 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
           if (_audioPlayerState != null) Text('Status: ${_audioPlayerState.toString().split('.').last}'),
         ],
       );
+    } else if (mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) {
+      if (_isLoadingTextContent) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (_errorLoadingTextContent.isNotEmpty) {
+        return Center(child: Text(_errorLoadingTextContent, style: const TextStyle(color: Colors.red)));
+      } else if (_textContent != null) {
+        return Scrollbar(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(_textContent!),
+          ),
+        );
+      }
+      return const Center(child: Text('Loading content...')); // Fallback if text content is expected but not loaded
     }
-    return const Center(child: Text('Unsupported file type'));
+    return const Center(child: Text('Unsupported file type for preview'));
   }
 
   @override
