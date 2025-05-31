@@ -145,7 +145,9 @@ class _MediaHomePageState extends State<MediaHomePage> {
       // Reload all files on any change for simplicity
       // A more optimized approach would be to handle specific events (add, remove, modify)
       if (_selectedDirectory != null) {
+        // Reload both media files and the directory hierarchy
         _loadMediaFiles(_selectedDirectory!);
+        _buildDirectoryHierarchy(_selectedDirectory!);
       }
     });
     print("Watching directory: $path");
