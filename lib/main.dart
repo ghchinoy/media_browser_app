@@ -8,6 +8,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'dart:typed_data'; // For Uint8List
 import 'package:intl/intl.dart'; // For date formatting
+import 'dart:math'; // For log and pow in _formatFileSize
+
+import 'media_detail_dialog.dart'; // Import the new dialog
 
 void main() {
   runApp(const MediaBrowserApp());
@@ -128,6 +131,15 @@ class _MediaHomePageState extends State<MediaHomePage> {
     super.dispose();
   }
 
+  // Helper function to format file size (already present in MediaDetailDialog,
+  // but can be kept here if needed elsewhere, or removed if only dialog uses it)
+  String _formatFileSize(int bytes, [int decimals = 2]) {
+    if (bytes <= 0) return "0 B";
+    const suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    var i = (log(bytes) / log(1024)).floor();
+    return '${(bytes / pow(1024, i)).toStringAsFixed(decimals)} ${suffixes[i]}';
+  }
+
   Future<Uint8List?> _getVideoThumbnail(String videoPath) async {
     try {
       final thumbnailBytes = await VideoThumbnail.thumbnailData(
@@ -184,13 +196,22 @@ class _MediaHomePageState extends State<MediaHomePage> {
       previewWidget = const Icon(Icons.insert_drive_file_outlined, size: 50);
     }
 
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.all(8.0),
-      child: SizedBox(
-        width: 150,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
+    return InkWell(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return MediaDetailDialog(fileEntity: file);
+          },
+        );
+      },
+      child: Card(
+        elevation: 2,
+        margin: const EdgeInsets.all(8.0),
+        child: SizedBox(
+          width: 150,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             SizedBox(
@@ -212,6 +233,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
           ],
         ),
       ),
+    ),
     );
   }
 
