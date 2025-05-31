@@ -5,6 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:watcher/watcher.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+import 'dart:typed_data'; // For Uint8List
 import 'package:intl/intl.dart'; // For date formatting
 
 void main() {
@@ -73,6 +75,10 @@ class _MediaHomePageState extends State<MediaHomePage> {
     try {
       await for (final entity in directory.list(recursive: true)) {
         if (entity is File) {
+          // Skip .DS_Store files
+          if (entity.path.split(Platform.pathSeparator).last == '.DS_Store') {
+            continue;
+          }
           final mimeType = lookupMimeType(entity.path) ?? 'unknown';
           categorizedFiles.putIfAbsent(mimeType, () => []).add(entity);
         }
@@ -122,21 +128,60 @@ class _MediaHomePageState extends State<MediaHomePage> {
     super.dispose();
   }
 
+  Future<Uint8List?> _getVideoThumbnail(String videoPath) async {
+    try {
+      final thumbnailBytes = await VideoThumbnail.thumbnailData(
+        video: videoPath,
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: 120, // Corresponds to preview width
+        quality: 25,
+      );
+      return thumbnailBytes;
+    } catch (e) {
+      print("Error generating video thumbnail for $videoPath: $e");
+      return null;
+    }
+  }
+
   Widget _buildMediaCard(FileSystemEntity file) {
     final String fileName = file.path.split(Platform.pathSeparator).last;
     final String mimeType = lookupMimeType(file.path) ?? 'unknown';
-    IconData iconData;
+    Widget previewWidget;
 
     if (mimeType.startsWith('image/')) {
-      iconData = Icons.image_outlined;
+      previewWidget = Image.file(
+        File(file.path),
+        width: 120,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(Icons.broken_image_outlined, size: 50);
+        },
+      );
     } else if (mimeType.startsWith('video/')) {
-      iconData = Icons.videocam_outlined;
+      previewWidget = FutureBuilder<Uint8List?>(
+        future: _getVideoThumbnail(file.path),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData && snapshot.data != null) {
+            return Image.memory(
+              snapshot.data!,
+              width: 120,
+              height: 80,
+              fit: BoxFit.cover,
+            );
+          } else if (snapshot.hasError) {
+            print("Error loading video thumbnail from FutureBuilder: ${snapshot.error}");
+            return const Icon(Icons.broken_image_outlined, size: 50);
+          }
+          return const Icon(Icons.movie_creation_outlined, size: 50); // Placeholder
+        },
+      );
     } else if (mimeType.startsWith('audio/')) {
-      iconData = Icons.audiotrack_outlined;
+      previewWidget = const Icon(Icons.audiotrack_outlined, size: 50);
     } else if (mimeType == 'application/pdf') {
-      iconData = Icons.picture_as_pdf_outlined;
+      previewWidget = const Icon(Icons.picture_as_pdf_outlined, size: 50);
     } else {
-      iconData = Icons.insert_drive_file_outlined;
+      previewWidget = const Icon(Icons.insert_drive_file_outlined, size: 50);
     }
 
     return Card(
@@ -145,10 +190,14 @@ class _MediaHomePageState extends State<MediaHomePage> {
       child: SizedBox(
         width: 150,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Icon(iconData, size: 50),
+            SizedBox(
+              height: 80, // Fixed height for the preview area
+              width: 120,  // Fixed width for the preview area
+              child: Center(child: previewWidget),
+            ),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
