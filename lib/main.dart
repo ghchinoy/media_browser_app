@@ -37,7 +37,7 @@ class MediaHomePage extends StatefulWidget {
 class _MediaHomePageState extends State<MediaHomePage> {
   String? _selectedDirectory;
   Map<String, List<FileSystemEntity>> _mediaFiles = {};
-  DirectoryWatcher? _watcher;
+  StreamSubscription<WatchEvent>? _directoryChangesSubscription;
   bool _isLoading = false;
 
   Future<void> _pickDirectory() async {
@@ -100,9 +100,10 @@ class _MediaHomePageState extends State<MediaHomePage> {
   }
 
   void _watchDirectory(String path) {
-    _watcher?.close(); // Close previous watcher if any
-    _watcher = DirectoryWatcher(path);
-    _watcher?.events.listen((event) {
+    _directoryChangesSubscription?.cancel(); // Cancel previous subscription
+
+    final newWatcher = DirectoryWatcher(path);
+    _directoryChangesSubscription = newWatcher.events.listen((event) {
       print("File system event: ${event.type} on ${event.path}");
       // Reload all files on any change for simplicity
       // A more optimized approach would be to handle specific events (add, remove, modify)
@@ -115,7 +116,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
 
   @override
   void dispose() {
-    _watcher?.close();
+    _directoryChangesSubscription?.cancel();
     super.dispose();
   }
 
