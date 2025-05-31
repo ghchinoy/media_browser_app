@@ -141,6 +141,11 @@ class _MediaHomePageState extends State<MediaHomePage> {
             continue;
           }
 
+          // Ignore files with unknown MIME type
+          if (mimeType == 'unknown') {
+            continue;
+          }
+
           categorizedFiles.putIfAbsent(mimeType, () => []).add(entity);
         }
       }
