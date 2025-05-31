@@ -189,6 +189,86 @@ class _MediaHomePageState extends State<MediaHomePage> {
     }
   }
 
+  Widget _buildFolderTile(DirectoryNode node, {int depth = 0}) {
+    bool isCurrentlySelected = _activeFilterPath == node.directory.path;
+
+    if (node.children.isEmpty) {
+      return ListTile(
+        leading: Padding(
+          padding: EdgeInsets.only(left: depth * 16.0),
+          child: Icon(Icons.folder_outlined, color: isCurrentlySelected ? Theme.of(context).colorScheme.secondary : null),
+        ),
+        title: Text(node.directory.path.split(Platform.pathSeparator).last),
+        selected: isCurrentlySelected,
+        onTap: () {
+          setState(() {
+            _activeFilterPath = node.directory.path;
+          });
+        },
+      );
+    }
+
+    return ExpansionTile(
+      key: PageStorageKey<String>(node.directory.path), // Preserve expansion state
+      leading: Padding(
+        padding: EdgeInsets.only(left: depth * 16.0),
+        child: Icon(Icons.folder_outlined, color: isCurrentlySelected ? Theme.of(context).colorScheme.secondary : null),
+      ),
+      title: Text(node.directory.path.split(Platform.pathSeparator).last),
+      initiallyExpanded: node.isExpanded,
+      onExpansionChanged: (expanded) {
+        setState(() {
+          node.isExpanded = expanded;
+        });
+      },
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            tooltip: 'Filter by this folder',
+            color: isCurrentlySelected ? Theme.of(context).colorScheme.secondary : null,
+            onPressed: () {
+              setState(() {
+                _activeFilterPath = node.directory.path;
+              });
+            },
+          ),
+          // Default ExpansionTile chevron is added automatically
+        ],
+      ),
+      children: node.children.map((child) => _buildFolderTile(child, depth: depth + 1)).toList(),
+    );
+  }
+
+  Widget _buildFolderHierarchySidenav() {
+    if (_directoryTreeRoot == null) {
+      return const Center(child: Text("No directory selected or hierarchy not built."));
+    }
+    return Container(
+      width: 250,
+      decoration: BoxDecoration(
+        border: Border(right: BorderSide(color: Theme.of(context).dividerColor)),
+      ),
+      child: ListView(
+        children: [
+          ListTile(
+            leading: Icon(Icons.folder_special_outlined, color: _activeFilterPath == null ? Theme.of(context).colorScheme.secondary : null),
+            title: const Text('All Files'),
+            selected: _activeFilterPath == null,
+            onTap: () {
+              setState(() {
+                _activeFilterPath = null;
+              });
+            },
+          ),
+          const Divider(),
+          _buildFolderTile(_directoryTreeRoot!),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMediaCard(FileSystemEntity file) {
     final String fileName = file.path.split(Platform.pathSeparator).last;
     final String mimeType = lookupMimeType(file.path) ?? 'unknown';
