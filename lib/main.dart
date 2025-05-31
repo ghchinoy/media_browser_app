@@ -489,6 +489,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_selectedDirectory?.split(Platform.pathSeparator).last ?? 'Media Browser'),
+        centerTitle: true, // Add this line to center the title
         actions: [
           IconButton(
             icon: Icon(widget.currentThemeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
