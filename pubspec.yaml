@@ -43,7 +43,7 @@ dependencies:
   video_player: ^2.8.6 # Check for latest
   audioplayers: ^6.0.0 # Check for latest
   flutter_markdown: ^0.7.1 # Check for latest version on pub.dev
-  flutter_syntax_view: ^10.0.0 # Check for latest version on pub.dev
+  flutter_syntax_view: ^4.1.7 # Using version suggested by pub tool
 
 dev_dependencies:
   flutter_test:
