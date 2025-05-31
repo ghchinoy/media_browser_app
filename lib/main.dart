@@ -521,9 +521,9 @@ class _MediaHomePageState extends State<MediaHomePage> {
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               width: _isSidenavExpanded ? 250.0 : 0.0,
-              child: ClipRect( // Prevents overflow during animation
-                child: _buildFolderHierarchySidenav(),
-              ),
+              child: _isSidenavExpanded
+                  ? ClipRect(child: _buildFolderHierarchySidenav())
+                  : const SizedBox.shrink(), // Use SizedBox.shrink() when collapsed
             ),
           Expanded(
             child: mainContent,
