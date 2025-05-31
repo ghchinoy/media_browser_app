@@ -522,8 +522,15 @@ class _MediaHomePageState extends State<MediaHomePage> {
               duration: const Duration(milliseconds: 300),
               width: _isSidenavExpanded ? 250.0 : 0.0,
               child: _isSidenavExpanded
-                  ? ClipRect(child: _buildFolderHierarchySidenav())
-                  : const SizedBox.shrink(), // Use SizedBox.shrink() when collapsed
+                  ? ClipRect(
+                      child: OverflowBox(
+                        alignment: Alignment.centerLeft,
+                        minWidth: 0.0, // Can be 0 as child Container specifies width
+                        maxWidth: 250.0, // Allow child to layout up to this width
+                        child: _buildFolderHierarchySidenav(), // This returns a Container(width: 250)
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           Expanded(
             child: mainContent,
