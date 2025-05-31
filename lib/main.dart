@@ -8,9 +8,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'dart:typed_data'; // For Uint8List
 import 'package:intl/intl.dart'; // For date formatting
-import 'dart:math'; // For log and pow in _formatFileSize
+// import 'dart:math'; // No longer needed here after removing _formatFileSize
 
 import 'media_detail_dialog.dart'; // Import the new dialog
+
+// Helper class for the directory tree structure
+class DirectoryNode {
+  final Directory directory;
+  final List<DirectoryNode> children;
+  bool isExpanded; // To manage expansion state in the UI
+
+  DirectoryNode(this.directory, this.children, {this.isExpanded = false});
+}
 
 void main() {
   runApp(const MediaBrowserApp());
@@ -45,6 +54,8 @@ class _MediaHomePageState extends State<MediaHomePage> {
   Map<String, List<FileSystemEntity>> _mediaFiles = {};
   StreamSubscription<WatchEvent>? _directoryChangesSubscription;
   bool _isLoading = false;
+  DirectoryNode? _directoryTreeRoot;
+  String? _activeFilterPath; // Path of the folder selected in sidenav for filtering
 
   Future<void> _pickDirectory() async {
     try {
@@ -53,9 +64,12 @@ class _MediaHomePageState extends State<MediaHomePage> {
         setState(() {
           _selectedDirectory = path;
           _mediaFiles = {}; // Clear previous files
+          _directoryTreeRoot = null; // Clear previous tree
+          _activeFilterPath = null; // Reset filter
           _isLoading = true;
         });
-        _loadMediaFiles(path);
+        await _loadMediaFiles(path); // Ensure media files are loaded first
+        await _buildDirectoryHierarchy(path); // Then build hierarchy
         _watchDirectory(path);
       }
     } catch (e) {
@@ -131,13 +145,33 @@ class _MediaHomePageState extends State<MediaHomePage> {
     super.dispose();
   }
 
-  // Helper function to format file size (already present in MediaDetailDialog,
-  // but can be kept here if needed elsewhere, or removed if only dialog uses it)
-  String _formatFileSize(int bytes, [int decimals = 2]) {
-    if (bytes <= 0) return "0 B";
-    const suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
-    var i = (log(bytes) / log(1024)).floor();
-    return '${(bytes / pow(1024, i)).toStringAsFixed(decimals)} ${suffixes[i]}';
+  Future<void> _buildDirectoryHierarchy(String rootPath) async {
+    final rootDir = Directory(rootPath);
+    if (await rootDir.exists()) {
+      _directoryTreeRoot = await _buildNode(rootDir);
+      setState(() {}); // Update UI with the new tree
+    }
+  }
+
+  Future<DirectoryNode> _buildNode(Directory dir) async {
+    final List<DirectoryNode> children = [];
+    try {
+      final List<FileSystemEntity> entities = await dir.list().toList();
+      for (final entity in entities) {
+        if (entity is Directory) {
+          // Skip hidden directories (like .git, .vscode, etc.)
+          if (!entity.path.split(Platform.pathSeparator).last.startsWith('.')) {
+            children.add(await _buildNode(entity));
+          }
+        }
+      }
+      // Sort children by name
+      children.sort((a, b) => a.directory.path.toLowerCase().compareTo(b.directory.path.toLowerCase()));
+    } catch (e) {
+      print("Error building directory node for ${dir.path}: $e");
+      // Optionally, handle permissions errors or other issues here
+    }
+    return DirectoryNode(dir, children);
   }
 
   Future<Uint8List?> _getVideoThumbnail(String videoPath) async {
@@ -239,9 +273,97 @@ class _MediaHomePageState extends State<MediaHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    Widget mainContent;
+    if (_selectedDirectory == null) {
+      mainContent = Center(
+        child: ElevatedButton.icon(
+          icon: const Icon(Icons.folder_open),
+          label: const Text('Select Media Directory'),
+          onPressed: _pickDirectory,
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 15,
+            ),
+            textStyle: const TextStyle(fontSize: 16),
+          ),
+        ),
+      );
+    } else if (_isLoading) {
+      mainContent = const Center(child: CircularProgressIndicator());
+    } else if (_mediaFiles.isEmpty && _directoryTreeRoot == null) {
+      // This case might occur if directory is empty or inaccessible before tree is built
+      mainContent = const Center(
+        child: Text('No media files found or directory is empty.'),
+      );
+    } else {
+      // Filter media files based on _activeFilterPath
+      Map<String, List<FileSystemEntity>> filteredMediaFiles = {};
+      if (_activeFilterPath == null) {
+        filteredMediaFiles = _mediaFiles;
+      } else {
+        _mediaFiles.forEach((mimeType, files) {
+          final List<FileSystemEntity> categoryFiles = files
+              .where((file) => file.path.startsWith(_activeFilterPath!))
+              .toList();
+          if (categoryFiles.isNotEmpty) {
+            filteredMediaFiles[mimeType] = categoryFiles;
+          }
+        });
+      }
+
+      if (filteredMediaFiles.isEmpty && _activeFilterPath != null) {
+        mainContent = Center(
+          child: Text('No media files found in "${_activeFilterPath!.split(Platform.pathSeparator).last}".'),
+        );
+      } else if (filteredMediaFiles.isEmpty && _activeFilterPath == null && _mediaFiles.isNotEmpty) {
+         // This case should ideally not be hit if _mediaFiles is not empty,
+         // but as a fallback if filtering somehow results in empty.
+        mainContent = const Center(
+          child: Text('No media files to display with current filter.'),
+        );
+      } else if (filteredMediaFiles.isEmpty && _mediaFiles.isEmpty) {
+        mainContent = const Center(
+          child: Text('No media files found in the selected directory.'),
+        );
+      }
+      else {
+        mainContent = ListView.builder(
+          itemCount: filteredMediaFiles.keys.length,
+          itemBuilder: (context, index) {
+            final String mimeType = filteredMediaFiles.keys.elementAt(index);
+            final List<FileSystemEntity> files = filteredMediaFiles[mimeType]!;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(12.0).copyWith(bottom: 4.0),
+                  child: Text(
+                    mimeType,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                SizedBox(
+                  height: 180, // Height of the horizontal row
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: files.length,
+                    itemBuilder: (context, fileIndex) {
+                      return _buildMediaCard(files[fileIndex]);
+                    },
+                  ),
+                ),
+                const Divider(),
+              ],
+            );
+          },
+        );
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Media Browser'),
+        title: Text(_selectedDirectory?.split(Platform.pathSeparator).last ?? 'Media Browser'),
         actions: [
           IconButton(
             icon: const Icon(Icons.folder_open),
@@ -250,57 +372,15 @@ class _MediaHomePageState extends State<MediaHomePage> {
           ),
         ],
       ),
-      body: _selectedDirectory == null
-          ? Center(
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.folder_open),
-                label: const Text('Select Media Directory'),
-                onPressed: _pickDirectory,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 15,
-                  ),
-                  textStyle: const TextStyle(fontSize: 16),
-                ),
-              ),
-            )
-          : _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _mediaFiles.isEmpty
-          ? const Center(
-              child: Text('No media files found in the selected directory.'),
-            )
-          : ListView.builder(
-              itemCount: _mediaFiles.keys.length,
-              itemBuilder: (context, index) {
-                final String mimeType = _mediaFiles.keys.elementAt(index);
-                final List<FileSystemEntity> files = _mediaFiles[mimeType]!;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.all(12.0).copyWith(bottom: 4.0),
-                      child: Text(
-                        mimeType,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 180, // Height of the horizontal row
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: files.length,
-                        itemBuilder: (context, fileIndex) {
-                          return _buildMediaCard(files[fileIndex]);
-                        },
-                      ),
-                    ),
-                    const Divider(),
-                  ],
-                );
-              },
-            ),
+      body: Row(
+        children: <Widget>[
+          if (_selectedDirectory != null && _directoryTreeRoot != null)
+            _buildFolderHierarchySidenav(),
+          Expanded(
+            child: mainContent,
+          ),
+        ],
+      ),
     );
   }
 }
