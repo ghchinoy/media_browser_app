@@ -33,7 +33,7 @@ class MediaBrowserApp extends StatefulWidget {
 }
 
 class _MediaBrowserAppState extends State<MediaBrowserApp> {
-  ThemeMode _themeMode = ThemeMode.dark; // Default to dark mode
+  ThemeMode _themeMode = ThemeMode.system; // Default to system theme
 
   void _toggleThemeMode() {
     setState(() {
