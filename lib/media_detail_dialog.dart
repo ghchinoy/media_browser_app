@@ -35,6 +35,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
   String? _textContent;
   bool _isLoadingTextContent = false;
   String _errorLoadingTextContent = '';
+  ScrollController? _textScrollController;
 
   String get mimeType => lookupMimeType(widget.fileEntity.path) ?? 'unknown';
   File get file => File(widget.fileEntity.path);
@@ -82,6 +83,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     }
 
     if (mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) {
+      _textScrollController = ScrollController();
       _loadTextContent();
     }
   }
@@ -139,6 +141,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     _playerStateSubscription?.cancel();
     _audioPlayer?.release(); // Release the audio player resources
     _audioPlayer?.dispose();
+    _textScrollController?.dispose();
     super.dispose();
   }
 
@@ -281,7 +284,10 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
         return Center(child: Text(_errorLoadingTextContent, style: const TextStyle(color: Colors.red)));
       } else if (_textContent != null) {
         return Scrollbar(
+          controller: _textScrollController,
+          thumbVisibility: true, // Makes the scrollbar always visible
           child: SingleChildScrollView(
+            controller: _textScrollController,
             padding: const EdgeInsets.all(8.0),
             child: Text(_textContent!),
           ),
