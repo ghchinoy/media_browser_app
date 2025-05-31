@@ -82,16 +82,17 @@ class _MediaHomePageState extends State<MediaHomePage> {
       // Handle error
     }
 
-
     // Sort files by name within each category
     categorizedFiles.forEach((key, value) {
-      value.sort((a, b) => a.path.toLowerCase().compareTo(b.path.toLowerCase()));
+      value.sort(
+        (a, b) => a.path.toLowerCase().compareTo(b.path.toLowerCase()),
+      );
     });
 
     // Sort categories by name
     final sortedCategorizedFiles = Map.fromEntries(
       categorizedFiles.entries.toList()
-        ..sort((e1, e2) => e1.key.compareTo(e2.key))
+        ..sort((e1, e2) => e1.key.compareTo(e2.key)),
     );
 
     setState(() {
@@ -109,7 +110,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
       // Reload all files on any change for simplicity
       // A more optimized approach would be to handle specific events (add, remove, modify)
       if (_selectedDirectory != null) {
-         _loadMediaFiles(_selectedDirectory!);
+        _loadMediaFiles(_selectedDirectory!);
       }
     });
     print("Watching directory: $path");
@@ -185,45 +186,50 @@ class _MediaHomePageState extends State<MediaHomePage> {
                 label: const Text('Select Media Directory'),
                 onPressed: _pickDirectory,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 15,
+                  ),
                   textStyle: const TextStyle(fontSize: 16),
                 ),
               ),
             )
           : _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _mediaFiles.isEmpty
-                  ? const Center(child: Text('No media files found in the selected directory.'))
-                  : ListView.builder(
-                      itemCount: _mediaFiles.keys.length,
-                      itemBuilder: (context, index) {
-                        final String mimeType = _mediaFiles.keys.elementAt(index);
-                        final List<FileSystemEntity> files = _mediaFiles[mimeType]!;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(12.0).copyWith(bottom: 4.0),
-                              child: Text(
-                                mimeType,
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                            ),
-                            SizedBox(
-                              height: 180, // Height of the horizontal row
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: files.length,
-                                itemBuilder: (context, fileIndex) {
-                                  return _buildMediaCard(files[fileIndex]);
-                                },
-                              ),
-                            ),
-                            const Divider(),
-                          ],
-                        );
-                      },
+          ? const Center(child: CircularProgressIndicator())
+          : _mediaFiles.isEmpty
+          ? const Center(
+              child: Text('No media files found in the selected directory.'),
+            )
+          : ListView.builder(
+              itemCount: _mediaFiles.keys.length,
+              itemBuilder: (context, index) {
+                final String mimeType = _mediaFiles.keys.elementAt(index);
+                final List<FileSystemEntity> files = _mediaFiles[mimeType]!;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(12.0).copyWith(bottom: 4.0),
+                      child: Text(
+                        mimeType,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
+                    SizedBox(
+                      height: 180, // Height of the horizontal row
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: files.length,
+                        itemBuilder: (context, fileIndex) {
+                          return _buildMediaCard(files[fileIndex]);
+                        },
+                      ),
+                    ),
+                    const Divider(),
+                  ],
+                );
+              },
+            ),
     );
   }
 }
