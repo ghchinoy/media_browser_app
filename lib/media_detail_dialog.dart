@@ -1,3 +1,4 @@
+import 'dart:async'; // Import for StreamSubscription
 import 'dart:io';
 import 'dart:math'; // For log and pow in _formatFileSize
 import 'dart:typed_data'; // For Uint8List, though not directly used here, good for consistency
