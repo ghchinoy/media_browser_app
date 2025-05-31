@@ -273,21 +273,19 @@ class _MediaHomePageState extends State<MediaHomePage> {
           node.isExpanded = expanded;
         });
       },
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            tooltip: 'Filter by this folder',
-            color: isCurrentlySelected ? Theme.of(context).colorScheme.secondary : null,
-            onPressed: () {
-              setState(() {
-                _activeFilterPath = node.directory.path;
-              });
-            },
-          ),
-          // Default ExpansionTile chevron is added automatically
-        ],
+      trailing: IconButton(
+        icon: const Icon(Icons.filter_list),
+        iconSize: 20.0, // Make the icon itself smaller
+        padding: EdgeInsets.zero, // Remove default padding around the icon
+        constraints: const BoxConstraints(minWidth: 24, minHeight: 24, maxWidth: 30, maxHeight: 30), // Constrain the button's size
+        visualDensity: VisualDensity.compact, // Use a more compact layout
+        tooltip: 'Filter by this folder',
+        color: isCurrentlySelected ? Theme.of(context).colorScheme.secondary : null,
+        onPressed: () {
+          setState(() {
+            _activeFilterPath = node.directory.path;
+          });
+        },
       ),
       children: node.children.map((child) => _buildFolderTile(child, depth: depth + 1)).toList(),
     );
