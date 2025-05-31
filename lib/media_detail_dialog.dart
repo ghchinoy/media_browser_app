@@ -21,6 +21,11 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
   AudioPlayer? _audioPlayer;
   PlayerState? _audioPlayerState;
   bool _isAudioPlaying = false;
+  Duration? _audioDuration;
+  Duration? _audioPosition;
+  StreamSubscription? _durationSubscription;
+  StreamSubscription? _positionSubscription;
+  StreamSubscription? _playerStateSubscription;
 
   FileStat? _fileStat;
   bool _isLoadingMetadata = true;
@@ -55,12 +60,22 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
         });
     } else if (mimeType.startsWith('audio/')) {
       _audioPlayer = AudioPlayer();
-      _audioPlayer?.onPlayerStateChanged.listen((PlayerState s) {
+      _playerStateSubscription = _audioPlayer?.onPlayerStateChanged.listen((PlayerState s) {
         if (mounted) {
           setState(() {
             _audioPlayerState = s;
             _isAudioPlaying = s == PlayerState.playing;
           });
+        }
+      });
+      _durationSubscription = _audioPlayer?.onDurationChanged.listen((Duration d) {
+        if (mounted) {
+          setState(() => _audioDuration = d);
+        }
+      });
+      _positionSubscription = _audioPlayer?.onPositionChanged.listen((Duration p) {
+        if (mounted) {
+          setState(() => _audioPosition = p);
         }
       });
     }
@@ -118,6 +133,9 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
   @override
   void dispose() {
     _videoController?.dispose();
+    _durationSubscription?.cancel();
+    _positionSubscription?.cancel();
+    _playerStateSubscription?.cancel();
     _audioPlayer?.release(); // Release the audio player resources
     _audioPlayer?.dispose();
     super.dispose();
@@ -128,6 +146,14 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     const suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
     var i = (log(bytes) / log(1024)).floor();
     return '${(bytes / pow(1024, i)).toStringAsFixed(decimals)} ${suffixes[i]}';
+  }
+
+  String _formatDuration(Duration? duration) {
+    if (duration == null) return '--:--';
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 
   Future<void> _playAudio() async {
@@ -204,7 +230,33 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.audiotrack, size: 100),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
+          if (_audioDuration != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_formatDuration(_audioPosition)),
+                  Text(_formatDuration(_audioDuration)),
+                ],
+              ),
+            ),
+          if (_audioDuration != null)
+            Slider(
+              value: (_audioPosition != null &&
+                      _audioDuration != null &&
+                      _audioDuration!.inMilliseconds > 0)
+                  ? (_audioPosition!.inMilliseconds / _audioDuration!.inMilliseconds)
+                      .clamp(0.0, 1.0)
+                  : 0.0,
+              onChanged: (value) {
+                if (_audioDuration != null) {
+                  final position = Duration(milliseconds: (value * _audioDuration!.inMilliseconds).round());
+                  _audioPlayer?.seek(position);
+                }
+              },
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
