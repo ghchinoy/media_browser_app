@@ -136,14 +136,8 @@ class _MediaHomePageState extends State<MediaHomePage> {
           }
           final mimeType = lookupMimeType(entity.path) ?? 'unknown';
 
-          // List of MIME types to exclude
-          const excludedMimeTypes = {
-            'application/x-csh',
-            'application/octet-stream', // Often a fallback for unknown binary files
-            // Add other MIME types to exclude here if needed
-          };
-
-          if (excludedMimeTypes.contains(mimeType)) {
+          // Ignore all mime types starting with application/
+          if (mimeType.startsWith('application/')) {
             continue;
           }
 
