@@ -70,7 +70,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
 
     final Map<String, List<FileSystemEntity>> categorizedFiles = {};
     try {
-      await for (final entity in directory.list()) {
+      await for (final entity in directory.list(recursive: true)) {
         if (entity is File) {
           final mimeType = lookupMimeType(entity.path) ?? 'unknown';
           categorizedFiles.putIfAbsent(mimeType, () => []).add(entity);
