@@ -25,8 +25,21 @@ void main() {
   runApp(const MediaBrowserApp());
 }
 
-class MediaBrowserApp extends StatelessWidget {
+class MediaBrowserApp extends StatefulWidget {
   const MediaBrowserApp({super.key});
+
+  @override
+  State<MediaBrowserApp> createState() => _MediaBrowserAppState();
+}
+
+class _MediaBrowserAppState extends State<MediaBrowserApp> {
+  ThemeMode _themeMode = ThemeMode.dark; // Default to dark mode
+
+  void _toggleThemeMode() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,16 +47,34 @@ class MediaBrowserApp extends StatelessWidget {
       title: 'Media Browser',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        brightness: Brightness.light,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        // Consider further customizing your light theme here
+      ),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.blue, // Or a different color for dark theme
         brightness: Brightness.dark,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        // Consider further customizing your dark theme here
       ),
-      home: const MediaHomePage(),
+      themeMode: _themeMode,
+      home: MediaHomePage(
+        currentThemeMode: _themeMode,
+        toggleThemeMode: _toggleThemeMode,
+      ),
     );
   }
 }
 
 class MediaHomePage extends StatefulWidget {
-  const MediaHomePage({super.key});
+  final ThemeMode currentThemeMode;
+  final VoidCallback toggleThemeMode;
+
+  const MediaHomePage({
+    super.key,
+    required this.currentThemeMode,
+    required this.toggleThemeMode,
+  });
 
   @override
   State<MediaHomePage> createState() => _MediaHomePageState();
@@ -459,6 +490,11 @@ class _MediaHomePageState extends State<MediaHomePage> {
       appBar: AppBar(
         title: Text(_selectedDirectory?.split(Platform.pathSeparator).last ?? 'Media Browser'),
         actions: [
+          IconButton(
+            icon: Icon(widget.currentThemeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
+            tooltip: 'Toggle Theme',
+            onPressed: widget.toggleThemeMode,
+          ),
           IconButton(
             icon: const Icon(Icons.folder_open),
             tooltip: 'Open Directory',
