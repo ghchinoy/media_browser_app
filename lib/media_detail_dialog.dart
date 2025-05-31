@@ -207,6 +207,21 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
               child: VideoPlayer(_videoController!),
             ),
             VideoProgressIndicator(_videoController!, allowScrubbing: true),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              child: ValueListenableBuilder<VideoPlayerValue>(
+                valueListenable: _videoController!,
+                builder: (context, value, child) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(_formatDuration(value.position)),
+                      Text(_formatDuration(value.duration)),
+                    ],
+                  );
+                },
+              ),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
