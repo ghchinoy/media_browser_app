@@ -269,8 +269,13 @@ class _MediaHomePageState extends State<MediaHomePage> {
       title: Text(node.directory.path.split(Platform.pathSeparator).last),
       initiallyExpanded: node.isExpanded,
       onExpansionChanged: (expanded) {
-        setState(() {
-          node.isExpanded = expanded;
+        // Defer the setState call until after the build phase
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) { // Check if the widget is still in the tree
+            setState(() {
+              node.isExpanded = expanded;
+            });
+          }
         });
       },
       trailing: IconButton(
