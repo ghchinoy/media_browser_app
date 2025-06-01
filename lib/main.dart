@@ -156,6 +156,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
     try {
       final String? path = await FilePicker.platform.getDirectoryPath();
       if (path != null) {
+        print("Directory picked: $path"); // Logging
         await _selectAndLoadDirectory(path);
       }
     } catch (e) {
@@ -169,12 +170,15 @@ class _MediaHomePageState extends State<MediaHomePage> {
   }
 
   Future<void> _loadMediaFiles(String path) async {
+    print("Starting _loadMediaFiles for path: $path"); // Logging
     final directory = Directory(path);
     if (!await directory.exists()) {
       print("Directory does not exist: $path");
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) { // Ensure mounted before calling setState
+        setState(() {
+          _isLoading = false;
+        });
+      }
       return;
     }
 
@@ -187,6 +191,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
             continue;
           }
           final mimeType = lookupMimeType(entity.path) ?? 'unknown';
+          // print("Processing file: ${entity.path}, MIME: $mimeType"); // Verbose logging
 
           // Ignore all mime types starting with application/
           if (mimeType.startsWith('application/')) {
@@ -195,6 +200,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
 
           // Ignore files with unknown MIME type
           if (mimeType == 'unknown') {
+            // print("Skipping unknown MIME type for file: ${entity.path}"); // Logging
             continue;
           }
 
@@ -202,7 +208,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
         }
       }
     } catch (e) {
-      print("Error listing files: $e");
+      print("Error listing files in _loadMediaFiles: $e"); // Logging
       // Handle error
     }
 
@@ -223,8 +229,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
           }
           return comparisonResult;
         } catch (e) {
-          // Handle error if statSync fails for one of the files
-          print("Error getting file stats for sorting: $e. Falling back to name sort for these items.");
+          print("Error getting file stats for sorting: $e. File A: ${a.path}, File B: ${b.path}. Falling back to name sort."); // Logging
           // Fallback to sorting by path if stats are unavailable
           return a.path.toLowerCase().compareTo(b.path.toLowerCase());
         }
@@ -236,26 +241,32 @@ class _MediaHomePageState extends State<MediaHomePage> {
       categorizedFiles.entries.toList()
         ..sort((e1, e2) => e1.key.compareTo(e2.key)),
     );
-
-    setState(() {
-      _mediaFiles = sortedCategorizedFiles;
-      _isLoading = false;
-    });
+    
+    if (mounted) { // Ensure mounted before calling setState
+      setState(() {
+        _mediaFiles = sortedCategorizedFiles;
+        _isLoading = false;
+      });
+    }
+    print("Finished _loadMediaFiles for path: $path. Found ${categorizedFiles.length} categories."); // Logging
   }
 
   void _watchDirectory(String path) {
     _directoryChangesSubscription?.cancel(); // Cancel previous subscription
+    print("Setting up directory watcher for path: $path"); // Logging
 
     final newWatcher = DirectoryWatcher(path);
     _directoryChangesSubscription = newWatcher.events.listen((event) {
-      print("File system event: ${event.type} on ${event.path}");
+      print("File system event: ${event.type} on ${event.path}"); // Logging
       // Reload all files on any change for simplicity
-      // A more optimized approach would be to handle specific events (add, remove, modify)
-      if (_selectedDirectory != null) {
-        // Reload both media files and the directory hierarchy
+      if (_selectedDirectory != null && mounted) { // Ensure mounted
+        // Debounce or delay might be useful here in future
+        print("Reloading due to watcher event."); // Logging
         _loadMediaFiles(_selectedDirectory!);
         _buildDirectoryHierarchy(_selectedDirectory!);
       }
+    }, onError: (error) { // Add onError for the stream
+      print("Error in directory watcher stream: $error"); // Logging
     });
     print("Watching directory: $path");
   }
@@ -431,6 +442,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
   Widget _buildMediaCard(FileSystemEntity file) {
     final String fileName = file.path.split(Platform.pathSeparator).last;
     final String mimeType = lookupMimeType(file.path) ?? 'unknown';
+    // print("Building media card for: ${file.path}, MIME: $mimeType"); // Verbose logging
     Widget previewWidget;
 
     if (mimeType.startsWith('image/')) {
@@ -439,7 +451,9 @@ class _MediaHomePageState extends State<MediaHomePage> {
         width: 120,
         height: 80,
         fit: BoxFit.cover,
+        key: ValueKey(file.path + File(file.path).statSync().modified.toString()), // Attempt to bust cache on modification
         errorBuilder: (context, error, stackTrace) {
+          print("Error loading image preview for ${file.path}: $error"); // Logging
           return const Icon(Icons.broken_image_outlined, size: 50);
         },
       );
@@ -458,19 +472,20 @@ class _MediaHomePageState extends State<MediaHomePage> {
             );
           } else if (snapshot.hasError) {
             print(
-              "Error loading video thumbnail from FutureBuilder: ${snapshot.error}",
+              "Error loading video thumbnail from FutureBuilder for ${file.path}: ${snapshot.error}", // Logging
             );
             return const Icon(Icons.broken_image_outlined, size: 50);
           }
+          // Show placeholder while loading or if no data and no error yet
           return const Icon(
             Icons.movie_creation_outlined,
             size: 50,
-          ); // Placeholder
+          ); 
         },
       );
     } else if (mimeType.startsWith('audio/')) {
       previewWidget = const Icon(Icons.audiotrack_outlined, size: 50);
-    } else if (mimeType == 'application/pdf') {
+    } else if (mimeType == 'application/pdf') { // This was text/pdf, should be application/pdf
       previewWidget = const Icon(Icons.picture_as_pdf_outlined, size: 50);
     } else {
       previewWidget = const Icon(Icons.insert_drive_file_outlined, size: 50);
@@ -634,6 +649,25 @@ class _MediaHomePageState extends State<MediaHomePage> {
             tooltip: 'Toggle Theme',
             onPressed: widget.toggleThemeMode,
           ),
+          // Add Global Refresh Button here
+          if (_selectedDirectory != null) // Only show if a directory is selected
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh Media',
+              onPressed: () async {
+                if (_selectedDirectory != null) {
+                  print("Global refresh triggered for: $_selectedDirectory");
+                  // Set loading state true immediately for better UX
+                  if (mounted) {
+                    setState(() {
+                      _isLoading = true;
+                    });
+                  }
+                  await _selectAndLoadDirectory(_selectedDirectory!);
+                  // _isLoading will be set to false at the end of _loadMediaFiles
+                }
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.folder_open),
             tooltip: 'Open Directory',
