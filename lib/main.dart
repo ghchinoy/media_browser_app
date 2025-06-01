@@ -156,11 +156,29 @@ class _MediaHomePageState extends State<MediaHomePage> {
       // Handle error
     }
 
-    // Sort files by name within each category
+    // Sort files by modification date (most recent first) within each category
     categorizedFiles.forEach((key, value) {
-      value.sort(
-        (a, b) => a.path.toLowerCase().compareTo(b.path.toLowerCase()),
-      );
+      value.sort((a, b) {
+        try {
+          // a and b are FileSystemEntity, confirmed to be File instances by prior logic
+          final statA = File(a.path).statSync();
+          final statB = File(b.path).statSync();
+
+          // Sort by modification date in descending order (most recent first)
+          int comparisonResult = statB.modified.compareTo(statA.modified);
+
+          // If modification times are identical, sort by name as a secondary criterion
+          if (comparisonResult == 0) {
+            return a.path.toLowerCase().compareTo(b.path.toLowerCase());
+          }
+          return comparisonResult;
+        } catch (e) {
+          // Handle error if statSync fails for one of the files
+          print("Error getting file stats for sorting: $e. Falling back to name sort for these items.");
+          // Fallback to sorting by path if stats are unavailable
+          return a.path.toLowerCase().compareTo(b.path.toLowerCase());
+        }
+      });
     });
 
     // Sort categories by name
