@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:watcher/watcher.dart';
 import 'package:mime/mime.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'dart:typed_data'; // For Uint8List
-import 'package:intl/intl.dart'; // For date formatting
+// For date formatting
 // import 'dart:math'; // No longer needed here after removing _formatFileSize
 
 import 'media_detail_dialog.dart'; // Import the new dialog
@@ -37,7 +36,9 @@ class _MediaBrowserAppState extends State<MediaBrowserApp> {
 
   void _toggleThemeMode() {
     setState(() {
-      _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+      _themeMode = _themeMode == ThemeMode.dark
+          ? ThemeMode.light
+          : ThemeMode.dark;
     });
   }
 
@@ -86,7 +87,8 @@ class _MediaHomePageState extends State<MediaHomePage> {
   StreamSubscription<WatchEvent>? _directoryChangesSubscription;
   bool _isLoading = false;
   DirectoryNode? _directoryTreeRoot;
-  String? _activeFilterPath; // Path of the folder selected in sidenav for filtering
+  String?
+  _activeFilterPath; // Path of the folder selected in sidenav for filtering
   bool _isSidenavExpanded = true; // State for sidenav visibility
 
   void _toggleSidenav() {
@@ -217,7 +219,11 @@ class _MediaHomePageState extends State<MediaHomePage> {
         }
       }
       // Sort children by name
-      children.sort((a, b) => a.directory.path.toLowerCase().compareTo(b.directory.path.toLowerCase()));
+      children.sort(
+        (a, b) => a.directory.path.toLowerCase().compareTo(
+          b.directory.path.toLowerCase(),
+        ),
+      );
     } catch (e) {
       print("Error building directory node for ${dir.path}: $e");
       // Optionally, handle permissions errors or other issues here
@@ -247,7 +253,12 @@ class _MediaHomePageState extends State<MediaHomePage> {
       return ListTile(
         leading: Padding(
           padding: EdgeInsets.only(left: depth * 16.0),
-          child: Icon(Icons.folder_outlined, color: isCurrentlySelected ? Theme.of(context).colorScheme.secondary : null),
+          child: Icon(
+            Icons.folder_outlined,
+            color: isCurrentlySelected
+                ? Theme.of(context).colorScheme.secondary
+                : null,
+          ),
         ),
         title: Text(node.directory.path.split(Platform.pathSeparator).last),
         selected: isCurrentlySelected,
@@ -260,17 +271,25 @@ class _MediaHomePageState extends State<MediaHomePage> {
     }
 
     return ExpansionTile(
-      key: PageStorageKey<String>(node.directory.path), // Preserve expansion state
+      key: PageStorageKey<String>(
+        node.directory.path,
+      ), // Preserve expansion state
       leading: Padding(
         padding: EdgeInsets.only(left: depth * 16.0),
-        child: Icon(Icons.folder_outlined, color: isCurrentlySelected ? Theme.of(context).colorScheme.secondary : null),
+        child: Icon(
+          Icons.folder_outlined,
+          color: isCurrentlySelected
+              ? Theme.of(context).colorScheme.secondary
+              : null,
+        ),
       ),
       title: Text(node.directory.path.split(Platform.pathSeparator).last),
       initiallyExpanded: node.isExpanded,
       onExpansionChanged: (expanded) {
         // Defer the setState call until after the build phase
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) { // Check if the widget is still in the tree
+          if (mounted) {
+            // Check if the widget is still in the tree
             setState(() {
               node.isExpanded = expanded;
             });
@@ -281,33 +300,51 @@ class _MediaHomePageState extends State<MediaHomePage> {
         icon: const Icon(Icons.filter_list),
         iconSize: 20.0, // Make the icon itself smaller
         padding: EdgeInsets.zero, // Remove default padding around the icon
-        constraints: const BoxConstraints(minWidth: 24, minHeight: 24, maxWidth: 30, maxHeight: 30), // Constrain the button's size
+        constraints: const BoxConstraints(
+          minWidth: 24,
+          minHeight: 24,
+          maxWidth: 30,
+          maxHeight: 30,
+        ), // Constrain the button's size
         visualDensity: VisualDensity.compact, // Use a more compact layout
         tooltip: 'Filter by this folder',
-        color: isCurrentlySelected ? Theme.of(context).colorScheme.secondary : null,
+        color: isCurrentlySelected
+            ? Theme.of(context).colorScheme.secondary
+            : null,
         onPressed: () {
           setState(() {
             _activeFilterPath = node.directory.path;
           });
         },
       ),
-      children: node.children.map((child) => _buildFolderTile(child, depth: depth + 1)).toList(),
+      children: node.children
+          .map((child) => _buildFolderTile(child, depth: depth + 1))
+          .toList(),
     );
   }
 
   Widget _buildFolderHierarchySidenav() {
     if (_directoryTreeRoot == null) {
-      return const Center(child: Text("No directory selected or hierarchy not built."));
+      return const Center(
+        child: Text("No directory selected or hierarchy not built."),
+      );
     }
     return Container(
       width: 250,
       decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: Theme.of(context).dividerColor)),
+        border: Border(
+          right: BorderSide(color: Theme.of(context).dividerColor),
+        ),
       ),
       child: ListView(
         children: [
           ListTile(
-            leading: Icon(Icons.folder_special_outlined, color: _activeFilterPath == null ? Theme.of(context).colorScheme.secondary : null),
+            leading: Icon(
+              Icons.folder_special_outlined,
+              color: _activeFilterPath == null
+                  ? Theme.of(context).colorScheme.secondary
+                  : null,
+            ),
             title: const Text('All Files'),
             selected: _activeFilterPath == null,
             onTap: () {
@@ -342,7 +379,9 @@ class _MediaHomePageState extends State<MediaHomePage> {
       previewWidget = FutureBuilder<Uint8List?>(
         future: _getVideoThumbnail(file.path),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData && snapshot.data != null) {
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData &&
+              snapshot.data != null) {
             return Image.memory(
               snapshot.data!,
               width: 120,
@@ -350,10 +389,15 @@ class _MediaHomePageState extends State<MediaHomePage> {
               fit: BoxFit.cover,
             );
           } else if (snapshot.hasError) {
-            print("Error loading video thumbnail from FutureBuilder: ${snapshot.error}");
+            print(
+              "Error loading video thumbnail from FutureBuilder: ${snapshot.error}",
+            );
             return const Icon(Icons.broken_image_outlined, size: 50);
           }
-          return const Icon(Icons.movie_creation_outlined, size: 50); // Placeholder
+          return const Icon(
+            Icons.movie_creation_outlined,
+            size: 50,
+          ); // Placeholder
         },
       );
     } else if (mimeType.startsWith('audio/')) {
@@ -383,28 +427,28 @@ class _MediaHomePageState extends State<MediaHomePage> {
           width: 150,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(
-              height: 80, // Fixed height for the preview area
-              width: 120,  // Fixed width for the preview area
-              child: Center(child: previewWidget),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                fileName,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12),
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              SizedBox(
+                height: 80, // Fixed height for the preview area
+                width: 120, // Fixed width for the preview area
+                child: Center(child: previewWidget),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  fileName,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -418,10 +462,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
           label: const Text('Select Media Directory'),
           onPressed: _pickDirectory,
           style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 15,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             textStyle: const TextStyle(fontSize: 16),
           ),
         ),
@@ -451,11 +492,15 @@ class _MediaHomePageState extends State<MediaHomePage> {
 
       if (filteredMediaFiles.isEmpty && _activeFilterPath != null) {
         mainContent = Center(
-          child: Text('No media files found in "${_activeFilterPath!.split(Platform.pathSeparator).last}".'),
+          child: Text(
+            'No media files found in "${_activeFilterPath!.split(Platform.pathSeparator).last}".',
+          ),
         );
-      } else if (filteredMediaFiles.isEmpty && _activeFilterPath == null && _mediaFiles.isNotEmpty) {
-         // This case should ideally not be hit if _mediaFiles is not empty,
-         // but as a fallback if filtering somehow results in empty.
+      } else if (filteredMediaFiles.isEmpty &&
+          _activeFilterPath == null &&
+          _mediaFiles.isNotEmpty) {
+        // This case should ideally not be hit if _mediaFiles is not empty,
+        // but as a fallback if filtering somehow results in empty.
         mainContent = const Center(
           child: Text('No media files to display with current filter.'),
         );
@@ -463,8 +508,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
         mainContent = const Center(
           child: Text('No media files found in the selected directory.'),
         );
-      }
-      else {
+      } else {
         mainContent = ListView.builder(
           itemCount: filteredMediaFiles.keys.length,
           itemBuilder: (context, index) {
@@ -507,11 +551,18 @@ class _MediaHomePageState extends State<MediaHomePage> {
                 onPressed: _toggleSidenav,
               )
             : null,
-        title: Text(_selectedDirectory?.split(Platform.pathSeparator).last ?? 'Media Browser'),
+        title: Text(
+          _selectedDirectory?.split(Platform.pathSeparator).last ??
+              'Media Browser',
+        ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(widget.currentThemeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
+            icon: Icon(
+              widget.currentThemeMode == ThemeMode.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
             tooltip: 'Toggle Theme',
             onPressed: widget.toggleThemeMode,
           ),
@@ -532,16 +583,17 @@ class _MediaHomePageState extends State<MediaHomePage> {
                   ? ClipRect(
                       child: OverflowBox(
                         alignment: Alignment.centerLeft,
-                        minWidth: 0.0, // Can be 0 as child Container specifies width
-                        maxWidth: 250.0, // Allow child to layout up to this width
-                        child: _buildFolderHierarchySidenav(), // This returns a Container(width: 250)
+                        minWidth:
+                            0.0, // Can be 0 as child Container specifies width
+                        maxWidth:
+                            250.0, // Allow child to layout up to this width
+                        child:
+                            _buildFolderHierarchySidenav(), // This returns a Container(width: 250)
                       ),
                     )
                   : const SizedBox.shrink(),
             ),
-          Expanded(
-            child: mainContent,
-          ),
+          Expanded(child: mainContent),
         ],
       ),
     );
