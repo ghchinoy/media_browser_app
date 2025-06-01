@@ -20,12 +20,14 @@ class DirectoryNode {
   DirectoryNode(this.directory, this.children, {this.isExpanded = false});
 }
 
-void main() {
-  runApp(const MediaBrowserApp());
+void main(List<String> args) {
+  runApp(MediaBrowserApp(initialPath: args.isNotEmpty ? args[0] : null));
 }
 
 class MediaBrowserApp extends StatefulWidget {
-  const MediaBrowserApp({super.key});
+  final String? initialPath;
+
+  const MediaBrowserApp({super.key, this.initialPath});
 
   @override
   State<MediaBrowserApp> createState() => _MediaBrowserAppState();
@@ -62,6 +64,7 @@ class _MediaBrowserAppState extends State<MediaBrowserApp> {
       home: MediaHomePage(
         currentThemeMode: _themeMode,
         toggleThemeMode: _toggleThemeMode,
+        initialPath: widget.initialPath,
       ),
     );
   }
@@ -70,11 +73,13 @@ class _MediaBrowserAppState extends State<MediaBrowserApp> {
 class MediaHomePage extends StatefulWidget {
   final ThemeMode currentThemeMode;
   final VoidCallback toggleThemeMode;
+  final String? initialPath;
 
   const MediaHomePage({
     super.key,
     required this.currentThemeMode,
     required this.toggleThemeMode,
+    this.initialPath,
   });
 
   @override
@@ -91,30 +96,75 @@ class _MediaHomePageState extends State<MediaHomePage> {
   _activeFilterPath; // Path of the folder selected in sidenav for filtering
   bool _isSidenavExpanded = true; // State for sidenav visibility
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialPath != null && widget.initialPath!.isNotEmpty) {
+      // Use a post-frame callback to ensure context is available for ScaffoldMessenger
+      // and to avoid issues if setState is called during the build phase.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) { // Check if the widget is still in the tree
+          _selectAndLoadDirectory(widget.initialPath!);
+        }
+      });
+    }
+  }
+
   void _toggleSidenav() {
     setState(() {
       _isSidenavExpanded = !_isSidenavExpanded;
     });
   }
 
+  Future<void> _selectAndLoadDirectory(String path) async {
+    // Validate if the path is a directory and exists
+    final directory = Directory(path);
+    if (!await directory.exists()) {
+      print("Error: Provided path is not a valid directory or does not exist: $path");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: Invalid directory path '$path'")),
+        );
+      }
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Ensure loading indicator is turned off
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _selectedDirectory = path;
+        _mediaFiles = {}; // Clear previous files
+        _directoryTreeRoot = null; // Clear previous tree
+        _activeFilterPath = null; // Reset filter
+        _isLoading = true;
+      });
+    } else {
+      // If not mounted, do not proceed with loading.
+      return;
+    }
+    
+    await _loadMediaFiles(path);
+    await _buildDirectoryHierarchy(path);
+    _watchDirectory(path);
+  }
+
   Future<void> _pickDirectory() async {
     try {
       final String? path = await FilePicker.platform.getDirectoryPath();
       if (path != null) {
-        setState(() {
-          _selectedDirectory = path;
-          _mediaFiles = {}; // Clear previous files
-          _directoryTreeRoot = null; // Clear previous tree
-          _activeFilterPath = null; // Reset filter
-          _isLoading = true;
-        });
-        await _loadMediaFiles(path); // Ensure media files are loaded first
-        await _buildDirectoryHierarchy(path); // Then build hierarchy
-        _watchDirectory(path);
+        await _selectAndLoadDirectory(path);
       }
     } catch (e) {
       print("Error picking directory: $e");
-      // Handle error, e.g., show a snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error picking directory: $e")),
+        );
+      }
     }
   }
 
