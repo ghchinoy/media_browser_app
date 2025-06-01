@@ -1,7 +1,7 @@
 import 'dart:async'; // Import for StreamSubscription
 import 'dart:io';
 import 'dart:math'; // For log and pow in _formatFileSize
-import 'dart:typed_data'; // For Uint8List, though not directly used here, good for consistency
+// For Uint8List, though not directly used here, good for consistency
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
@@ -54,22 +54,26 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
 
     if (mimeType.startsWith('video/')) {
       _videoController = VideoPlayerController.file(file)
-        ..initialize().then((_) {
-          if (mounted) {
-            setState(() {}); // When initialized, rebuild to show video
-            _videoController?.play();
-          }
-        }).catchError((error) {
-          if (mounted) {
-            setState(() {
-              _errorLoadingMetadata = "Error loading video: $error";
+        ..initialize()
+            .then((_) {
+              if (mounted) {
+                setState(() {}); // When initialized, rebuild to show video
+                _videoController?.play();
+              }
+            })
+            .catchError((error) {
+              if (mounted) {
+                setState(() {
+                  _errorLoadingMetadata = "Error loading video: $error";
+                });
+              }
+              print("Error initializing video player: $error");
             });
-          }
-          print("Error initializing video player: $error");
-        });
     } else if (mimeType.startsWith('audio/')) {
       _audioPlayer = AudioPlayer();
-      _playerStateSubscription = _audioPlayer?.onPlayerStateChanged.listen((PlayerState s) {
+      _playerStateSubscription = _audioPlayer?.onPlayerStateChanged.listen((
+        PlayerState s,
+      ) {
         if (mounted) {
           setState(() {
             _audioPlayerState = s;
@@ -77,12 +81,16 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
           });
         }
       });
-      _durationSubscription = _audioPlayer?.onDurationChanged.listen((Duration d) {
+      _durationSubscription = _audioPlayer?.onDurationChanged.listen((
+        Duration d,
+      ) {
         if (mounted) {
           setState(() => _audioDuration = d);
         }
       });
-      _positionSubscription = _audioPlayer?.onPositionChanged.listen((Duration p) {
+      _positionSubscription = _audioPlayer?.onPositionChanged.listen((
+        Duration p,
+      ) {
         if (mounted) {
           setState(() => _audioPosition = p);
         }
@@ -90,14 +98,18 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     }
 
     // Load text content for JSON, text, or markdown files
-    if (mimeType == 'application/json' || mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) {
+    if (mimeType == 'application/json' ||
+        mimeType.startsWith('text/') ||
+        file.path.toLowerCase().endsWith('.md')) {
       _loadTextContent();
     }
 
     // Initialize scroll controller specifically for the text/markdown path that uses MarkdownBody + SingleChildScrollView
     // JSON will use SyntaxView which handles its own scrolling.
-    if ((mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) && mimeType != 'application/json') {
-        _textScrollController = ScrollController();
+    if ((mimeType.startsWith('text/') ||
+            file.path.toLowerCase().endsWith('.md')) &&
+        mimeType != 'application/json') {
+      _textScrollController = ScrollController();
     }
   }
 
@@ -181,9 +193,9 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
       } catch (e) {
         print("Error playing audio: $e");
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error playing audio: $e")),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Error playing audio: $e")));
         }
       }
     }
@@ -220,7 +232,10 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
             ),
             VideoProgressIndicator(_videoController!, allowScrubbing: true),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 4.0,
+              ),
               child: ValueListenableBuilder<VideoPlayerValue>(
                 valueListenable: _videoController!,
                 builder: (context, value, child) {
@@ -238,7 +253,11 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(_videoController!.value.isPlaying ? Icons.pause : Icons.play_arrow),
+                  icon: Icon(
+                    _videoController!.value.isPlaying
+                        ? Icons.pause
+                        : Icons.play_arrow,
+                  ),
                   onPressed: () {
                     if (mounted) {
                       setState(() {
@@ -250,11 +269,15 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
                   },
                 ),
               ],
-            )
+            ),
           ],
         );
       } else if (_videoController?.value.hasError ?? false) {
-         return Center(child: Text('Error loading video: ${_videoController?.value.errorDescription}'));
+        return Center(
+          child: Text(
+            'Error loading video: ${_videoController?.value.errorDescription}',
+          ),
+        );
       }
       return const Center(child: CircularProgressIndicator());
     } else if (mimeType.startsWith('audio/')) {
@@ -276,15 +299,20 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
             ),
           if (_audioDuration != null)
             Slider(
-              value: (_audioPosition != null &&
+              value:
+                  (_audioPosition != null &&
                       _audioDuration != null &&
                       _audioDuration!.inMilliseconds > 0)
-                  ? (_audioPosition!.inMilliseconds / _audioDuration!.inMilliseconds)
-                      .clamp(0.0, 1.0)
+                  ? (_audioPosition!.inMilliseconds /
+                            _audioDuration!.inMilliseconds)
+                        .clamp(0.0, 1.0)
                   : 0.0,
               onChanged: (value) {
                 if (_audioDuration != null) {
-                  final position = Duration(milliseconds: (value * _audioDuration!.inMilliseconds).round());
+                  final position = Duration(
+                    milliseconds: (value * _audioDuration!.inMilliseconds)
+                        .round(),
+                  );
                   _audioPlayer?.seek(position);
                 }
               },
@@ -296,36 +324,47 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
                 icon: Icon(_isAudioPlaying ? Icons.pause : Icons.play_arrow),
                 onPressed: _isAudioPlaying ? _pauseAudio : _playAudio,
               ),
-              IconButton(
-                icon: const Icon(Icons.stop),
-                onPressed: _stopAudio,
-              ),
+              IconButton(icon: const Icon(Icons.stop), onPressed: _stopAudio),
             ],
           ),
-          if (_audioPlayerState != null) Text('Status: ${_audioPlayerState.toString().split('.').last}'),
+          if (_audioPlayerState != null)
+            Text('Status: ${_audioPlayerState.toString().split('.').last}'),
         ],
       );
     } else if (mimeType == 'application/json') {
       if (_isLoadingTextContent) {
         return const Center(child: CircularProgressIndicator());
       } else if (_errorLoadingTextContent.isNotEmpty) {
-        return Center(child: Text(_errorLoadingTextContent, style: const TextStyle(color: Colors.red)));
+        return Center(
+          child: Text(
+            _errorLoadingTextContent,
+            style: const TextStyle(color: Colors.red),
+          ),
+        );
       } else if (_textContent != null) {
         return SyntaxView(
           code: _textContent!,
-          syntax: Syntax.JSON,
-          syntaxTheme: widget.currentThemeMode == ThemeMode.dark ? SyntaxTheme.vscodeDark() : SyntaxTheme.vscodeLight(),
+          syntax: Syntax.JAVASCRIPT,
+          syntaxTheme: widget.currentThemeMode == ThemeMode.dark
+              ? SyntaxTheme.vscodeDark()
+              : SyntaxTheme.vscodeLight(),
           expanded: true, // Fills available space and handles scrolling
           withLinesCount: true,
           selectable: true,
         );
       }
       return const Center(child: Text('Loading JSON content...'));
-    } else if (mimeType.startsWith('text/') || file.path.toLowerCase().endsWith('.md')) {
+    } else if (mimeType.startsWith('text/') ||
+        file.path.toLowerCase().endsWith('.md')) {
       if (_isLoadingTextContent) {
         return const Center(child: CircularProgressIndicator());
       } else if (_errorLoadingTextContent.isNotEmpty) {
-        return Center(child: Text(_errorLoadingTextContent, style: const TextStyle(color: Colors.red)));
+        return Center(
+          child: Text(
+            _errorLoadingTextContent,
+            style: const TextStyle(color: Colors.red),
+          ),
+        );
       } else if (_textContent != null) {
         return Scrollbar(
           controller: _textScrollController,
@@ -340,14 +379,18 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
           ),
         );
       }
-      return const Center(child: Text('Loading content...')); // Fallback if text content is expected but not loaded
+      return const Center(
+        child: Text('Loading content...'),
+      ); // Fallback if text content is expected but not loaded
     }
     return const Center(child: Text('Unsupported file type for preview'));
   }
 
   @override
   Widget build(BuildContext context) {
-    final String fileName = widget.fileEntity.path.split(Platform.pathSeparator).last;
+    final String fileName = widget.fileEntity.path
+        .split(Platform.pathSeparator)
+        .last;
 
     return AlertDialog(
       title: Text(fileName, overflow: TextOverflow.ellipsis),
@@ -362,21 +405,31 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Flexible( // Allows the media content to take available space
-                child: Center( // Center the media content
-                   child: _buildMediaContent(),
-                )
+              Flexible(
+                // Allows the media content to take available space
+                child: Center(
+                  // Center the media content
+                  child: _buildMediaContent(),
+                ),
               ),
               const SizedBox(height: 20),
-              const Text('Details:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Details:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               if (_isLoadingMetadata)
                 const CircularProgressIndicator()
               else if (_errorLoadingMetadata.isNotEmpty)
-                 Text(_errorLoadingMetadata, style: const TextStyle(color: Colors.red))
+                Text(
+                  _errorLoadingMetadata,
+                  style: const TextStyle(color: Colors.red),
+                )
               else if (_fileStat != null) ...[
                 Text('Path: ${widget.fileEntity.path}'),
                 Text('Size: ${_formatFileSize(_fileStat!.size)}'),
-                Text('Last Modified: ${DateFormat.yMd().add_jms().format(_fileStat!.modified)}'),
+                Text(
+                  'Last Modified: ${DateFormat.yMd().add_jms().format(_fileStat!.modified)}',
+                ),
                 Text('MIME Type: $mimeType'),
               ] else
                 const Text('Could not load file details.'),

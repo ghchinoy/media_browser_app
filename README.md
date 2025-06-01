@@ -1,0 +1,62 @@
+# Media Browser
+
+This Flutter macOS application allows users to browse and view media files within a selected directory and its subdirectories.
+
+**Key Features:**
+
+*   **Directory Selection:** Users can pick a root directory on their system.
+*   **Recursive Media Listing:** Displays media files (images, videos, audio) from the chosen directory and all its nested folders.
+*   **File Type Filtering:**
+    *   Ignores hidden `.DS_Store` files.
+    *   Excludes all files with `application/*` MIME types (e.g., `application/pdf`, `application/json` are not listed in the main browser but specific viewers exist if they were to be loaded).
+    *   Skips files with an 'unknown' MIME type.
+*   **Collapsible Folder Hierarchy Sidenav:**
+    *   A sidebar displays the folder structure of the selected root directory.
+    *   This sidebar can be collapsed or expanded.
+    *   Selecting a folder in the sidebar filters the main view to show only media within that specific folder.
+    *   An "All Files" option in the sidebar displays all media from the root directory and its children.
+*   **Media Previews:**
+    *   **Images:** Shows a preview thumbnail in the media card.
+    *   **Videos:** Displays a generated thumbnail in the media card.
+    *   **Audio:** Shows a generic audio icon.
+*   **Media Detail Dialog:**
+    *   **Images:** Opens an enlarged, interactive (zoomable) view of the image.
+    *   **Videos:** Provides a video player with play/pause controls, a progress indicator, and current/total time display.
+    *   **Audio:** Offers an audio player with play/pause/stop controls and a timeline slider with current/total time display.
+    *   **Text/Markdown:** Renders Markdown content in a scrollable view.
+    *   **JSON:** Displays JSON content with syntax highlighting in a scrollable view.
+    *   **Metadata:** Shows the full file path, size, last modified date, and MIME type for the selected file.
+*   **Light/Dark Mode:**
+    *   Defaults to the system's current light or dark theme on startup.
+    *   Includes a toggle button in the app bar to manually switch between light and dark modes for the current session.
+*   **Live Directory Watching:** Automatically updates the displayed media files and the folder hierarchy in the sidebar if changes (additions, deletions, modifications) occur within the selected directory.
+
+
+
+## Build & Release
+
+
+### to create a release
+
+The following will create build/macos/Build/Products/Release/Media Browser.app
+
+```bash
+flutter build macos --release  
+```
+
+
+
+On MacOS, you can provide a path at opening
+
+ex.
+
+```bash
+open Media\ Browser.app --args ~/genmedia/pip_storyboard
+```
+
+
+# License
+Apache 2.0; see LICENSE for details.
+
+# Disclaimer
+This project is not an official Google project. It is not supported by Google and Google specifically disclaims all warranties as to its quality, merchantability, or fitness for a particular purpose.
