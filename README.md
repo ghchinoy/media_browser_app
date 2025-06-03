@@ -1,6 +1,6 @@
 # Media Browser
 
-This Flutter macOS application allows users to browse and view media files within a selected directory and its subdirectories.
+This Flutter application allows users to browse and view media files within a selected directory and its subdirectories. While initially focused on macOS, it can also be built and run on Linux.
 
 **Key Features:**
 
@@ -31,29 +31,70 @@ This Flutter macOS application allows users to browse and view media files withi
     *   Includes a toggle button in the app bar to manually switch between light and dark modes for the current session.
 *   **Live Directory Watching:** Automatically updates the displayed media files and the folder hierarchy in the sidebar if changes (additions, deletions, modifications) occur within the selected directory.
 
+## Flutter Version
 
+This project requires a Flutter SDK that includes Dart `^3.9.0-100.2.beta` or compatible.
 
 ## Build & Release
 
+### macOS
 
-### to create a release
-
-The following will create build/macos/Build/Products/Release/Media Browser.app
+The following will create `build/macos/Build/Products/Release/Media Browser.app`
 
 ```bash
 flutter build macos --release  
 ```
 
-
-
-On MacOS, you can provide a path at opening
-
-ex.
+On MacOS, you can provide a path at opening e.g.
 
 ```bash
 open Media\ Browser.app --args ~/genmedia/pip_storyboard
 ```
 
+### Linux (e.g., on a Chromebook with Crostini)
+
+**Prerequisites:**
+
+Ensure you have the following development libraries and tools installed. On Debian/Ubuntu-based systems, you can use:
+
+```bash
+sudo apt-get update && sudo apt-get install -y \
+    clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
+    libasound2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+    zenity
+```
+
+*   `clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`, `liblzma-dev`: General Flutter Linux build dependencies.
+*   `libasound2-dev`, `libgstreamer1.0-dev`, `libgstreamer-plugins-base1.0-dev`: For audio playback capabilities via the `audioplayers` plugin.
+*   `zenity`: For native file/directory picker dialogs used by the `file_picker` plugin.
+
+**Building:**
+
+1.  **Enable Linux platform support** (if not already done):
+    ```bash
+    flutter create --platforms linux .
+    ```
+2.  **Get dependencies:**
+    ```bash
+    flutter pub get
+    ```
+3.  **Build the release application:**
+    ```bash
+    flutter build linux --release
+    ```
+    If you encounter build issues related to install paths, try cleaning first:
+    ```bash
+    flutter clean && flutter build linux --release
+    ```
+
+**Running:**
+
+The executable will be located at `build/linux/x64/release/bundle/media_browser_app`.
+Run it from the project root directory:
+
+```bash
+./build/linux/x64/release/bundle/media_browser_app
+```
 
 # License
 Apache 2.0; see LICENSE for details.
