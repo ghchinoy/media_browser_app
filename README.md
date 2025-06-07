@@ -16,12 +16,12 @@ This Flutter application allows users to browse and view media files within a se
     *   Selecting a folder in the sidebar filters the main view to show only media within that specific folder.
     *   An "All Files" option in the sidebar displays all media from the root directory and its children.
 *   **Media Previews:**
-    *   **Images:** Shows a preview thumbnail in the media card.
+    *   **Images:** Shows a preview thumbnail in the media card with a fade-in animation.
     *   **Videos:** Displays a generated thumbnail in the media card.
     *   **Audio:** Shows a generic audio icon.
 *   **Media Detail Dialog:**
     *   **Images:** Opens an enlarged, interactive (zoomable) view of the image.
-    *   **Videos:** Provides a video player with play/pause controls, a progress indicator, and current/total time display.
+    *   **Videos:** Provides a video player with play/pause controls, a progress indicator, and a full-screen button. The full-screen player supports click-to-play/pause.
     *   **Audio:** Offers an audio player with play/pause/stop controls and a timeline slider with current/total time display.
     *   **Text/Markdown:** Renders Markdown content in a scrollable view.
     *   **JSON:** Displays JSON content with syntax highlighting in a scrollable view.
@@ -30,6 +30,21 @@ This Flutter application allows users to browse and view media files within a se
     *   Defaults to the system's current light or dark theme on startup.
     *   Includes a toggle button in the app bar to manually switch between light and dark modes for the current session.
 *   **Live Directory Watching:** Automatically updates the displayed media files and the folder hierarchy in the sidebar if changes (additions, deletions, modifications) occur within the selected directory.
+*   **Performant UI:**
+    *   Uses skeleton loaders (shimmer effect) for a better loading experience when scanning a directory.
+    *   Lazy loads media files to efficiently handle large directories.
+
+## Performance
+
+The application has been optimized for performance in several ways:
+
+*   **Background File Processing:** File scanning and image data loading are performed in a background isolate to keep the UI responsive.
+*   **Image Caching:** Image thumbnails are cached in memory to improve scrolling performance.
+*   **Lazy Loading:** Media files are lazy-loaded to efficiently handle large directories.
+
+## Known Issues
+
+*   **Video Thumbnails on macOS:** The `video_thumbnail` plugin may not be automatically registered on macOS, leading to a `MissingPluginException`. If you encounter this issue, you may need to manually register the plugin in `macos/Flutter/GeneratedPluginRegistrant.swift`.
 
 ## Flutter Version
 
