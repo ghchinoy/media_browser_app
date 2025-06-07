@@ -44,6 +44,8 @@ dependencies:
   audioplayers: ^6.0.0 # Check for latest
   flutter_markdown: ^0.7.1 # Check for latest version on pub.dev
   flutter_syntax_view: ^4.1.7 # Using version suggested by pub tool
+  cached_memory_image: ^1.4.2
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

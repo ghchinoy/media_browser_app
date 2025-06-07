@@ -10,6 +10,8 @@ import 'package:mime/mime.dart'; // To determine mimeType again if needed, or pa
 import 'package:flutter_markdown/flutter_markdown.dart'; // Import for Markdown rendering
 import 'package:flutter_syntax_view/flutter_syntax_view.dart'; // Import for Syntax Highlighting
 
+import 'fullscreen_video_player.dart';
+
 class MediaDetailDialog extends StatefulWidget {
   final FileSystemEntity fileEntity;
   final ThemeMode currentThemeMode;
@@ -164,8 +166,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     _durationSubscription?.cancel();
     _positionSubscription?.cancel();
     _playerStateSubscription?.cancel();
-    _audioPlayer?.release(); // Release the audio player resources
-    _audioPlayer?.dispose();
+    _audioPlayer?.dispose(); // dispose() also handles releasing resources
     _textScrollController?.dispose();
     super.dispose();
   }
@@ -231,45 +232,58 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
               child: VideoPlayer(_videoController!),
             ),
             VideoProgressIndicator(_videoController!, allowScrubbing: true),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 4.0,
-              ),
-              child: ValueListenableBuilder<VideoPlayerValue>(
-                valueListenable: _videoController!,
-                builder: (context, value, child) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(_formatDuration(value.position)),
-                      Text(_formatDuration(value.duration)),
-                    ],
-                  );
-                },
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    _videoController!.value.isPlaying
-                        ? Icons.pause
-                        : Icons.play_arrow,
-                  ),
-                  onPressed: () {
-                    if (mounted) {
-                      setState(() {
-                        _videoController!.value.isPlaying
-                            ? _videoController!.pause()
-                            : _videoController!.play();
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
+            ValueListenableBuilder<VideoPlayerValue>(
+              valueListenable: _videoController!,
+              builder: (context, value, child) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 4.0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Text(_formatDuration(value.position)),
+                          Text(_formatDuration(value.duration)),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            value.isPlaying ? Icons.pause : Icons.play_arrow,
+                          ),
+                          onPressed: () {
+                            if (mounted) {
+                              setState(() {
+                                value.isPlaying
+                                    ? _videoController!.pause()
+                                    : _videoController!.play();
+                              });
+                            }
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.fullscreen),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    FullscreenVideoPlayer(controller: _videoController!),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            )
           ],
         );
       } else if (_videoController?.value.hasError ?? false) {
