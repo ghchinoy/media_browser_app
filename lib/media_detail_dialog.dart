@@ -175,7 +175,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     super.dispose();
   }
 
-  // Formats the size of the file into a human-readable string.
+  // Formats the size of the file into a human-readable string (e.g., 1.23 MB).
   String _formatFileSize(int bytes, [int decimals = 2]) {
     if (bytes <= 0) return "0 B";
     const suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
