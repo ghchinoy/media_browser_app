@@ -1,5 +1,7 @@
 # Media Browser
 
+![Media Browser Screenshot](https://github.com/ghchinoy/media_browser_app/releases/download/v1.0.0-assets/media_browser.png)
+
 This Flutter application allows users to browse and view media files within a selected directory and its subdirectories. While initially focused on macOS, it can also be built and run on Linux.
 
 **Key Features:**
