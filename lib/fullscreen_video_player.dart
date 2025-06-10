@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+// A widget that displays a video in full screen.
 class FullscreenVideoPlayer extends StatefulWidget {
   final VideoPlayerController controller;
 
@@ -10,6 +11,7 @@ class FullscreenVideoPlayer extends StatefulWidget {
   State<FullscreenVideoPlayer> createState() => _FullscreenVideoPlayerState();
 }
 
+// The state for the full-screen video player.
 class _FullscreenVideoPlayerState extends State<FullscreenVideoPlayer> {
   @override
   Widget build(BuildContext context) {

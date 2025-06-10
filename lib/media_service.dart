@@ -5,7 +5,7 @@ import 'package:watcher/watcher.dart';
 
 import 'dart:typed_data';
 
-// Helper class to hold a file and its stats
+// A class to hold a file and its associated metadata.
 class MediaFile {
   final FileSystemEntity file;
   final FileStat stat;
@@ -14,15 +14,16 @@ class MediaFile {
   MediaFile(this.file, this.stat, this.bytes);
 }
 
-// Helper class for the directory tree structure
+// A class to represent a node in the directory tree.
 class DirectoryNode {
   final Directory directory;
   final List<DirectoryNode> children;
-  bool isExpanded; // To manage expansion state in the UI
+  bool isExpanded;
 
   DirectoryNode(this.directory, this.children, {this.isExpanded = false});
 }
 
+// A class to hold all the media data for a given directory.
 class MediaData {
   final Map<String, List<MediaFile>> mediaFiles;
   final DirectoryNode? directoryTree;
@@ -30,6 +31,7 @@ class MediaData {
   MediaData(this.mediaFiles, this.directoryTree);
 }
 
+// Loads all media files from the given path and returns them as a map of MIME type to a list of files.
 Future<Map<String, List<MediaFile>>> _loadMediaFiles(String path) async {
   final directory = Directory(path);
   if (!await directory.exists()) {
@@ -79,6 +81,7 @@ Future<Map<String, List<MediaFile>>> _loadMediaFiles(String path) async {
   }
 }
 
+// Recursively builds a directory tree from the given directory.
 Future<DirectoryNode> _buildNode(Directory dir) async {
   final List<DirectoryNode> children = [];
   try {
@@ -100,6 +103,7 @@ Future<DirectoryNode> _buildNode(Directory dir) async {
   return DirectoryNode(dir, children);
 }
 
+// Builds a directory hierarchy from the given root path.
 Future<DirectoryNode?> _buildDirectoryHierarchy(String rootPath) async {
   final rootDir = Directory(rootPath);
   if (await rootDir.exists()) {
@@ -108,15 +112,18 @@ Future<DirectoryNode?> _buildDirectoryHierarchy(String rootPath) async {
   return null;
 }
 
+// Loads all media data from the given path.
 Future<MediaData> loadAllMediaData(String path) async {
   final mediaFiles = await _loadMediaFiles(path);
   final directoryTree = await _buildDirectoryHierarchy(path);
   return MediaData(mediaFiles, directoryTree);
 }
 
+// A service class for handling media-related operations.
 class MediaService {
   StreamSubscription<WatchEvent>? _directoryWatcherSubscription;
 
+  // Watches the given directory for changes and returns a stream of events.
   Stream<void> watchDirectory(String path) {
     _directoryWatcherSubscription?.cancel();
     final controller = StreamController<void>();
@@ -138,6 +145,7 @@ class MediaService {
     return controller.stream;
   }
 
+  // Disposes of the resources used by the service.
   void dispose() {
     _directoryWatcherSubscription?.cancel();
   }

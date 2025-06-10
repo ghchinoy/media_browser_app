@@ -12,10 +12,12 @@ import 'package:cached_memory_image/cached_memory_image.dart';
 import 'media_detail_dialog.dart';
 import 'media_service.dart';
 
+// The main entry point for the application.
 void main(List<String> args) {
   runApp(MediaBrowserApp(initialPath: args.isNotEmpty ? args[0] : null));
 }
 
+// The root widget of the application.
 class MediaBrowserApp extends StatefulWidget {
   final String? initialPath;
 
@@ -25,9 +27,11 @@ class MediaBrowserApp extends StatefulWidget {
   State<MediaBrowserApp> createState() => _MediaBrowserAppState();
 }
 
+// The state for the root widget of the application.
 class _MediaBrowserAppState extends State<MediaBrowserApp> {
   ThemeMode _themeMode = ThemeMode.system;
 
+  // Toggles the theme of the application between light and dark mode.
   void _toggleThemeMode() {
     setState(() {
       _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
@@ -58,6 +62,7 @@ class _MediaBrowserAppState extends State<MediaBrowserApp> {
   }
 }
 
+// The home page of the application.
 class MediaHomePage extends StatefulWidget {
   final ThemeMode currentThemeMode;
   final VoidCallback toggleThemeMode;
@@ -74,6 +79,7 @@ class MediaHomePage extends StatefulWidget {
   State<MediaHomePage> createState() => _MediaHomePageState();
 }
 
+// The state for the home page of the application.
 class _MediaHomePageState extends State<MediaHomePage> {
   final MediaService _mediaService = MediaService();
   String? _selectedDirectory;
@@ -96,12 +102,14 @@ class _MediaHomePageState extends State<MediaHomePage> {
     }
   }
 
+  // Toggles the visibility of the side navigation panel.
   void _toggleSidenav() {
     setState(() {
       _isSidenavExpanded = !_isSidenavExpanded;
     });
   }
 
+  // Opens a directory picker and loads the media files from the selected directory.
   Future<void> _pickDirectory() async {
     try {
       final String? path = await FilePicker.platform.getDirectoryPath();
@@ -113,6 +121,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
     }
   }
 
+  // Loads the media files from the given directory path.
   Future<void> _selectDirectory(String path) async {
     setState(() {
       _selectedDirectory = path;
@@ -131,6 +140,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
     });
   }
 
+  // Loads all media data from the given path.
   Future<void> _loadAllData(String path) async {
     try {
       final mediaData = await compute(loadAllMediaData, path);
@@ -151,6 +161,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
     }
   }
 
+  // Shows an error message in a snackbar.
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -166,6 +177,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
     super.dispose();
   }
 
+  // Generates a thumbnail for the given video path.
   Future<Uint8List?> _getVideoThumbnail(String videoPath) async {
     try {
       final thumbnailBytes = await VideoThumbnail.thumbnailData(
@@ -181,6 +193,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
     }
   }
 
+  // Builds a widget for a single folder in the directory hierarchy.
   Widget _buildFolderTile(DirectoryNode node, {int depth = 0}) {
     bool isCurrentlySelected = _activeFilterPath == node.directory.path;
 
@@ -246,6 +259,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
     );
   }
 
+  // Builds the side navigation panel with the directory hierarchy.
   Widget _buildFolderHierarchySidenav() {
     if (_directoryTreeRoot == null) {
       return const Center(
@@ -279,6 +293,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
     );
   }
 
+  // Builds a card widget for a single media file.
   Widget _buildMediaCard(MediaFile mediaFile) {
     final file = mediaFile.file as File;
     final stat = mediaFile.stat;

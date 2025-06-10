@@ -12,6 +12,7 @@ import 'package:flutter_syntax_view/flutter_syntax_view.dart'; // Import for Syn
 
 import 'fullscreen_video_player.dart';
 
+// A dialog that displays media content and metadata for a given file.
 class MediaDetailDialog extends StatefulWidget {
   final FileSystemEntity fileEntity;
   final ThemeMode currentThemeMode;
@@ -26,6 +27,7 @@ class MediaDetailDialog extends StatefulWidget {
   State<MediaDetailDialog> createState() => _MediaDetailDialogState();
 }
 
+// The state for the media detail dialog.
 class _MediaDetailDialogState extends State<MediaDetailDialog> {
   VideoPlayerController? _videoController;
   AudioPlayer? _audioPlayer;
@@ -115,6 +117,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     }
   }
 
+  // Loads the text content of the file.
   Future<void> _loadTextContent() async {
     if (!mounted) return;
     setState(() {
@@ -140,6 +143,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     }
   }
 
+  // Loads the metadata for the file.
   Future<void> _loadMetadata() async {
     try {
       if (widget.fileEntity is File) {
@@ -171,6 +175,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     super.dispose();
   }
 
+  // Formats the size of the file into a human-readable string.
   String _formatFileSize(int bytes, [int decimals = 2]) {
     if (bytes <= 0) return "0 B";
     const suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -178,6 +183,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     return '${(bytes / pow(1024, i)).toStringAsFixed(decimals)} ${suffixes[i]}';
   }
 
+  // Formats a duration into a string in the format `mm:ss`.
   String _formatDuration(Duration? duration) {
     if (duration == null) return '--:--';
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -186,6 +192,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     return '$minutes:$seconds';
   }
 
+  // Plays the audio file.
   Future<void> _playAudio() async {
     if (_audioPlayer != null && file.existsSync()) {
       try {
@@ -202,16 +209,19 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
     }
   }
 
+  // Pauses the audio file.
   Future<void> _pauseAudio() async {
     await _audioPlayer?.pause();
     if (mounted) setState(() => _isAudioPlaying = false);
   }
 
+  // Stops the audio file.
   Future<void> _stopAudio() async {
     await _audioPlayer?.stop();
     if (mounted) setState(() => _isAudioPlaying = false);
   }
 
+  // Builds the content of the media detail dialog.
   Widget _buildMediaContent() {
     if (mimeType.startsWith('image/')) {
       return InteractiveViewer(
