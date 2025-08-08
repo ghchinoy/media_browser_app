@@ -186,7 +186,7 @@ jobs:
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
 
-      - name: 'Run Gemini'
+      - name: 'Run Gemini CLI with Observability'
         id: 'run_gemini'
         uses: 'google-github-actions/run-gemini-cli@v0'
         env:
@@ -207,7 +207,7 @@ jobs:
             {
               "maxSessionTurns": 50,
               "telemetry": {
-                "enabled": false,
+                "enabled": true,
                 "target": "gcp"
               }
             }
