@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
-import 'dart:typed_data';
+import 'package:flutter/services.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:shimmer/shimmer.dart';
@@ -87,6 +87,7 @@ class MediaHomePage extends StatefulWidget {
 
 // The state for the home page of the application.
 class _MediaHomePageState extends State<MediaHomePage> {
+  static const platform = MethodChannel('com.example.media_browser/args');
   final MediaService _mediaService = MediaService();
   String? _selectedDirectory;
   Map<String, List<MediaFile>> _mediaFiles = {};
@@ -99,12 +100,26 @@ class _MediaHomePageState extends State<MediaHomePage> {
   @override
   void initState() {
     super.initState();
+    _setupMethodChannel();
     if (widget.initialPath != null && widget.initialPath!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _selectDirectory(widget.initialPath!);
         }
       });
+    }
+  }
+
+  Future<void> _setupMethodChannel() async {
+    try {
+      platform.setMethodCallHandler((call) async {
+        if (call.method == "setInitialDirectory") {
+          final String path = call.arguments;
+          _selectDirectory(path);
+        }
+      });
+    } catch (e) {
+      _showError("Error setting up method channel: $e");
     }
   }
 

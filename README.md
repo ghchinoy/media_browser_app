@@ -62,11 +62,17 @@ The following will create `build/macos/Build/Products/Release/Media Browser.app`
 flutter build macos --release  
 ```
 
-On MacOS, you can provide a path at opening e.g.
+On macOS, you can open the application with a specific directory in two primary ways:
+
+1.  **Drag and Drop:** Drag a folder from Finder and drop it onto the `Media Browser.app` icon.
+2.  **Command Line:** Use the `open` command with the `-a` flag, followed by the application path and the directory path you wish to open.
 
 ```bash
-open Media\ Browser.app --args ~/genmedia/pip_storyboard
+# Example: Open the app with the '~/Pictures' directory
+open -a "/Applications/Media Browser.app" ~/Pictures
 ```
+
+**Note on macOS Sandboxing:** The application is sandboxed, which is a security feature of macOS. This means it can only access files and folders that you explicitly grant permission for. Passing a directory as a command-line flag (`--args`) will not work because the sandbox prevents the app from accessing arbitrary paths without direct user consent. The methods above (Drag and Drop, `open -a`) are the correct, platform-idiomatic ways to provide this consent at launch.
 
 ### Linux (e.g., on a Chromebook with Crostini)
 
