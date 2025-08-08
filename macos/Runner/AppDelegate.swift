@@ -20,8 +20,10 @@ class AppDelegate: FlutterAppDelegate {
     }
 
     override func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let controller: FlutterViewController =
-            mainFlutterWindow?.contentViewController as! FlutterViewController
+        guard let controller = mainFlutterWindow?.contentViewController as? FlutterViewController else {
+            fatalError("mainFlutterWindow.contentViewController is not of type FlutterViewController")
+        }
+
         channel = FlutterMethodChannel(
             name: "com.example.media_browser/args",
             binaryMessenger: controller.engine.binaryMessenger)

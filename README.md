@@ -68,8 +68,10 @@ On macOS, you can open the application with a specific directory in two primary 
 2.  **Command Line:** Use the `open` command with the `-a` flag, followed by the application path and the directory path you wish to open.
 
 ```bash
-# Example: Open the app with the '~/Pictures' directory
+# Example: Open the app with a specific directory (e.g., ~/Pictures)
 open -a "/Applications/Media Browser.app" ~/Pictures
+
+# Tip: You can drag the .app file from Finder into your terminal to get its exact path.
 ```
 
 **Note on macOS Sandboxing:** The application is sandboxed, which is a security feature of macOS. This means it can only access files and folders that you explicitly grant permission for. Passing a directory as a command-line flag (`--args`) will not work because the sandbox prevents the app from accessing arbitrary paths without direct user consent. The methods above (Drag and Drop, `open -a`) are the correct, platform-idiomatic ways to provide this consent at launch.
