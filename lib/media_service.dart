@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'package:mime/mime.dart';
 import 'package:watcher/watcher.dart';
+import 'package:logging/logging.dart';
 
 import 'dart:typed_data';
+
+final _logger = Logger('MediaService');
 
 // A class to hold a file and its associated metadata.
 class MediaFile {
@@ -41,22 +44,27 @@ Future<Map<String, List<MediaFile>>> _loadMediaFiles(String path) async {
   final Map<String, List<MediaFile>> categorizedFiles = {};
   try {
     await for (final entity in directory.list(recursive: true)) {
-      if (entity is File) {
-        if (entity.path.split(Platform.pathSeparator).last == '.DS_Store') {
-          continue;
+      try {
+        if (entity is File) {
+          if (entity.path.split(Platform.pathSeparator).last == '.DS_Store') {
+            continue;
+          }
+          final mimeType = lookupMimeType(entity.path) ?? 'unknown';
+          if (mimeType.startsWith('application/') || mimeType == 'unknown') {
+            continue;
+          }
+          final stat = await entity.stat();
+          Uint8List? bytes;
+          if (mimeType.startsWith('image/')) {
+            bytes = await entity.readAsBytes();
+          }
+          categorizedFiles
+              .putIfAbsent(mimeType, () => [])
+              .add(MediaFile(entity, stat, bytes));
         }
-        final mimeType = lookupMimeType(entity.path) ?? 'unknown';
-        if (mimeType.startsWith('application/') || mimeType == 'unknown') {
-          continue;
-        }
-        final stat = await entity.stat();
-        Uint8List? bytes;
-        if (mimeType.startsWith('image/')) {
-          bytes = await entity.readAsBytes();
-        }
-        categorizedFiles
-            .putIfAbsent(mimeType, () => [])
-            .add(MediaFile(entity, stat, bytes));
+      } catch (e) {
+        _logger.warning("Error processing file ${entity.path}: $e");
+        // Continue to the next file
       }
     }
 
@@ -76,7 +84,7 @@ Future<Map<String, List<MediaFile>>> _loadMediaFiles(String path) async {
     );
     return sortedCategorizedFiles;
   } catch (e) {
-    print("Error loading media files: $e");
+    _logger.severe("Error loading media files: $e");
     throw FileSystemException("Error loading media files", path, e as OSError?);
   }
 }
@@ -98,7 +106,7 @@ Future<DirectoryNode> _buildNode(Directory dir) async {
           a.directory.path.toLowerCase().compareTo(b.directory.path.toLowerCase()),
     );
   } catch (e) {
-    print("Error building directory node for ${dir.path}: $e");
+    _logger.warning("Error building directory node for ${dir.path}: $e");
   }
   return DirectoryNode(dir, children);
 }
@@ -134,7 +142,7 @@ class MediaService {
         controller.add(null);
       },
       onError: (error) {
-        print("Error in directory watcher stream: $error");
+        _logger.severe("Error in directory watcher stream: $error");
         controller.addError(error);
       },
       onDone: () {

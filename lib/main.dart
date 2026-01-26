@@ -9,11 +9,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_memory_image/cached_memory_image.dart';
+import 'package:logging/logging.dart';
 import 'media_detail_dialog.dart';
 import 'media_service.dart';
 
+final _logger = Logger('MediaBrowserApp');
+
 // The main entry point for the application.
 void main(List<String> args) {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    debugPrint('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
   runApp(MediaBrowserApp(initialPath: args.isNotEmpty ? args[0] : null));
 }
 
@@ -209,7 +217,7 @@ class _MediaHomePageState extends State<MediaHomePage> {
       );
       return thumbnailBytes;
     } catch (e) {
-      print("Error generating video thumbnail for $videoPath: $e");
+      _logger.severe("Error generating video thumbnail for $videoPath: $e");
       return null;
     }
   }
@@ -390,12 +398,15 @@ class _MediaHomePageState extends State<MediaHomePage> {
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  fileName,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12),
+                child: Tooltip(
+                  message: fileName,
+                  child: Text(
+                    fileName,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               ),
             ],
@@ -424,38 +435,56 @@ class _MediaHomePageState extends State<MediaHomePage> {
       mainContent = Shimmer.fromColors(
         baseColor: Colors.grey[300]!,
         highlightColor: Colors.grey[100]!,
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 200,
-            childAspectRatio: 3 / 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-          ),
-          itemCount: 12, // Placeholder for shimmer
+        child: ListView.builder(
+          itemCount: 3, // Placeholder for categories
           itemBuilder: (context, index) {
-            return Card(
-              elevation: 2,
-              margin: const EdgeInsets.all(8.0),
-              child: SizedBox(
-                width: 150,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Container(
-                      width: 120,
-                      height: 80,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 14,
-                      width: 100,
-                      color: Colors.white,
-                    ),
-                  ],
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(12.0).copyWith(bottom: 4.0),
+                  child: Container(
+                    width: 150,
+                    height: 24,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
+                SizedBox(
+                  height: 180,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 5, // Placeholder for items in category
+                    itemBuilder: (context, itemIndex) {
+                      return Card(
+                        elevation: 2,
+                        margin: const EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          width: 150,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+                              Container(
+                                width: 120,
+                                height: 80,
+                                margin: const EdgeInsets.only(top: 8.0),
+                                color: Colors.white,
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                height: 14,
+                                width: 100,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const Divider(),
+              ],
             );
           },
         ),

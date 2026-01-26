@@ -9,8 +9,11 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:mime/mime.dart'; // To determine mimeType again if needed, or pass it
 import 'package:flutter_markdown/flutter_markdown.dart'; // Import for Markdown rendering
 import 'package:flutter_syntax_view/flutter_syntax_view.dart'; // Import for Syntax Highlighting
+import 'package:logging/logging.dart';
 
 import 'fullscreen_video_player.dart';
+
+final _logger = Logger('MediaDetailDialog');
 
 // A dialog that displays media content and metadata for a given file.
 class MediaDetailDialog extends StatefulWidget {
@@ -71,7 +74,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
                   _errorLoadingMetadata = "Error loading video: $error";
                 });
               }
-              print("Error initializing video player: $error");
+              _logger.severe("Error initializing video player: $error");
             });
     } else if (mimeType.startsWith('audio/')) {
       _audioPlayer = AudioPlayer();
@@ -101,17 +104,18 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
       });
     }
 
-    // Load text content for JSON, text, or markdown files
+    // Load text content for JSON, text, markdown, or log files
     if (mimeType == 'application/json' ||
         mimeType.startsWith('text/') ||
-        file.path.toLowerCase().endsWith('.md')) {
+        file.path.toLowerCase().endsWith('.md') ||
+        file.path.toLowerCase().endsWith('.log')) {
       _loadTextContent();
     }
 
-    // Initialize scroll controller specifically for the text/markdown path that uses MarkdownBody + SingleChildScrollView
-    // JSON will use SyntaxView which handles its own scrolling.
+    // Initialize scroll controller specifically for the text path
     if ((mimeType.startsWith('text/') ||
-            file.path.toLowerCase().endsWith('.md')) &&
+            file.path.toLowerCase().endsWith('.md') ||
+            file.path.toLowerCase().endsWith('.log')) &&
         mimeType != 'application/json') {
       _textScrollController = ScrollController();
     }
@@ -139,7 +143,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
           _isLoadingTextContent = false;
         });
       }
-      print("Error reading text file ${file.path}: $e");
+      _logger.severe("Error reading text file ${file.path}: $e");
     }
   }
 
@@ -155,7 +159,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
           _errorLoadingMetadata = "Error loading metadata: $e";
         });
       }
-      print("Error loading file stats: $e");
+      _logger.severe("Error loading file stats: $e");
     }
     if (mounted) {
       setState(() {
@@ -199,7 +203,7 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
         await _audioPlayer?.play(DeviceFileSource(file.path));
         if (mounted) setState(() => _isAudioPlaying = true);
       } catch (e) {
-        print("Error playing audio: $e");
+        _logger.severe("Error playing audio: $e");
         if (mounted) {
           ScaffoldMessenger.of(
             context,
@@ -379,7 +383,8 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
       }
       return const Center(child: Text('Loading JSON content...'));
     } else if (mimeType.startsWith('text/') ||
-        file.path.toLowerCase().endsWith('.md')) {
+        file.path.toLowerCase().endsWith('.md') ||
+        file.path.toLowerCase().endsWith('.log')) {
       if (_isLoadingTextContent) {
         return const Center(child: CircularProgressIndicator());
       } else if (_errorLoadingTextContent.isNotEmpty) {
