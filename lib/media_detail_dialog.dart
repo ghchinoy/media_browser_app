@@ -270,6 +270,8 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
       Process.run('open', ['-R', path]);
     } else if (Platform.isLinux) {
       Process.run('xdg-open', [_currentFile.parent.path]);
+    } else if (Platform.isWindows) {
+      Process.run('explorer.exe', ['/select,', path]);
     }
   }
 
@@ -279,6 +281,8 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
       Process.run('open', [path]);
     } else if (Platform.isLinux) {
       Process.run('xdg-open', [path]);
+    } else if (Platform.isWindows) {
+      Process.run('cmd', ['/c', 'start', '', path]);
     }
   }
 
@@ -650,12 +654,15 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
                       tooltip: 'Copy File Path',
                       onPressed: _copyPathToClipboard,
                     ),
-                    if (Platform.isMacOS)
-                      IconButton(
-                        icon: const Icon(Icons.folder_open, size: 20),
-                        tooltip: 'Reveal in Finder',
-                        onPressed: _revealInFinder,
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.folder_open, size: 20),
+                      tooltip: Platform.isMacOS
+                          ? 'Reveal in Finder'
+                          : Platform.isWindows
+                              ? 'Reveal in File Explorer'
+                              : 'Reveal in File Manager',
+                      onPressed: _revealInFinder,
+                    ),
                     IconButton(
                       icon: const Icon(Icons.open_in_new, size: 20),
                       tooltip: 'Open in Default App',

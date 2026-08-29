@@ -1,0 +1,166 @@
+name: '🚀 Release'
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g. v1.1.0)'
+        required: true
+        type: string
+      draft:
+        description: 'Create as a draft release'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Create as a pre-release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: '🍎 Build macOS'
+    runs-on: macos-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Flutter'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 'Install dependencies'
+        run: flutter pub get
+
+      - name: 'Run tests'
+        run: flutter test
+
+      - name: 'Build macOS release'
+        run: flutter build macos --release
+
+      - name: 'Package macOS app bundle'
+        run: |-
+          ditto -c -k --sequesterRsrc --keepParent \
+            "build/macos/Build/Products/Release/Media Browser.app" \
+            "Media-Browser-macOS.zip"
+
+      - name: 'Upload macOS artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-binary
+          path: Media-Browser-macOS.zip
+          retention-days: 1
+
+  build-linux:
+    name: '🐧 Build Linux'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Install Linux system dependencies'
+        run: |-
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
+            libasound2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev zenity
+
+      - name: 'Set up Flutter'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 'Install dependencies'
+        run: flutter pub get
+
+      - name: 'Run tests'
+        run: flutter test
+
+      - name: 'Build Linux release'
+        run: flutter build linux --release
+
+      - name: 'Package Linux bundle'
+        run: |-
+          tar -czvf Media-Browser-Linux-x64.tar.gz -C build/linux/x64/release/bundle .
+
+      - name: 'Upload Linux artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-binary
+          path: Media-Browser-Linux-x64.tar.gz
+          retention-days: 1
+
+  build-windows:
+    name: '🪟 Build Windows'
+    runs-on: windows-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Flutter'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 'Install dependencies'
+        run: flutter pub get
+
+      - name: 'Run tests'
+        run: flutter test
+
+      - name: 'Build Windows release'
+        run: flutter build windows --release
+
+      - name: 'Package Windows bundle'
+        shell: pwsh
+        run: |-
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "Media-Browser-Windows-x64.zip"
+
+      - name: 'Upload Windows artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binary
+          path: Media-Browser-Windows-x64.zip
+          retention-days: 1
+
+  publish-release:
+    name: '📦 Publish GitHub Release'
+    needs: [build-macos, build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Download all build artifacts'
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: 'Organize release files'
+        run: |-
+          mkdir -p dist
+          cp release-artifacts/macos-binary/Media-Browser-macOS.zip dist/
+          cp release-artifacts/linux-binary/Media-Browser-Linux-x64.tar.gz dist/
+          cp release-artifacts/windows-binary/Media-Browser-Windows-x64.zip dist/
+          ls -la dist/
+
+      - name: 'Create GitHub Release'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          draft: ${{ github.event.inputs.draft || false }}
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+          generate_release_notes: true
+          files: dist/*
