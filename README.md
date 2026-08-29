@@ -1,129 +1,188 @@
 # Media Browser
 
-This Flutter application allows users to browse and view media files within a selected directory and its subdirectories. While initially focused on macOS, it can also be built and run on Linux.
+A fast, sandboxed desktop media and asset browser built with Flutter for macOS and Linux.
+
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Flutter](https://img.shields.io/badge/Flutter-v3.29%2B-02569B?logo=flutter)](https://flutter.dev)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)]()
 
 ![Media Browser Screenshot](https://github.com/ghchinoy/media_browser_app/releases/download/v1.0.0-assets/media_browser.png)
 
-Originially created for use with the [Gemini CLI](https://github.com/google-gemini/gemini-cli) or Claude desktop and [MCP Tools for Genmedia](goo.gle/vertex-genmedia-mcp) so that reviewing generated media is easier.
+Originally designed to streamline reviewing generated media from the [Gemini CLI](https://github.com/google-gemini/gemini-cli), Claude Desktop, and [MCP Tools for GenMedia](https://goo.gle/vertex-genmedia-mcp).
 
+---
 
-**Key Features:**
+## Table of Contents
 
-*   **Directory Selection:** Users can pick a root directory on their system.
-*   **Recursive Media Listing:** Displays media files (images, videos, audio) from the chosen directory and all its nested folders.
-*   **File Type Filtering:**
-    *   Ignores hidden `.DS_Store` files.
-    *   Excludes all files with `application/*` MIME types (e.g., `application/pdf`, `application/json` are not listed in the main browser but specific viewers exist if they were to be loaded).
-    *   Skips files with an 'unknown' MIME type.
-*   **Collapsible Folder Hierarchy Sidenav:**
-    *   A sidebar displays the folder structure of the selected root directory.
-    *   This sidebar can be collapsed or expanded.
-    *   Selecting a folder in the sidebar filters the main view to show only media within that specific folder.
-    *   An "All Files" option in the sidebar displays all media from the root directory and its children.
-*   **Media Previews:**
-    *   **Images:** Shows a preview thumbnail in the media card with a fade-in animation.
-    *   **Videos:** Displays a generated thumbnail in the media card.
-    *   **Audio:** Shows a generic audio icon.
-*   **Media Detail Dialog:**
-    *   **Images:** Opens an enlarged, interactive (zoomable) view of the image.
-    *   **Videos:** Provides a video player with play/pause controls, a progress indicator, and a full-screen button. The full-screen player supports click-to-play/pause.
-    *   **Audio:** Offers an audio player with play/pause/stop controls and a timeline slider with current/total time display.
-    *   **Text/Markdown:** Renders Markdown content in a scrollable view.
-    *   **JSON:** Displays JSON content with syntax highlighting in a scrollable view.
-    *   **Metadata:** Shows the full file path, size, last modified date, and MIME type for the selected file.
-*   **Light/Dark Mode:**
-    *   Defaults to the system's current light or dark theme on startup.
-    *   Includes a toggle button in the app bar to manually switch between light and dark modes for the current session.
-*   **Live Directory Watching:** Automatically updates the displayed media files and the folder hierarchy in the sidebar if changes (additions, deletions, modifications) occur within the selected directory.
-*   **Performant UI:**
-    *   Uses skeleton loaders (shimmer effect) for a better loading experience when scanning a directory.
-    *   Lazy loads media files to efficiently handle large directories.
+- [Quickstart](#quickstart)
+- [Key Features](#key-features)
+- [Supported Formats](#supported-formats)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [macOS Integration & Sandboxing](#macos-integration--sandboxing)
+- [Development & Testing](#development--testing)
+- [Performance Architecture](#performance-architecture)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Performance
+---
 
-The application has been optimized for performance in several ways:
+## Quickstart
 
-*   **Background File Processing:** File scanning and image data loading are performed in a background isolate to keep the UI responsive.
-*   **Image Caching:** Image thumbnails are cached in memory to improve scrolling performance.
-*   **Lazy Loading:** Media files are lazy-loaded to efficiently handle large directories.
+### Run with Flutter
 
-## Known Issues
-
-*   **Video Thumbnails on macOS:** The `video_thumbnail` plugin may not be automatically registered on macOS, leading to a `MissingPluginException`. If you encounter this issue, you may need to manually register the plugin in `macos/Flutter/GeneratedPluginRegistrant.swift`.
-
-## Flutter Version
-
-This project requires a Flutter SDK that includes Dart `^3.9.0-100.2.beta` or compatible.
-
-## Build & Release
-
-### macOS
-
-The following will create `build/macos/Build/Products/Release/Media Browser.app`
+Clone the repository and launch the app on macOS or Linux:
 
 ```bash
-flutter build macos --release  
+git clone https://github.com/ghchinoy/media_browser_app.git
+cd media_browser_app
+flutter pub get
+flutter run -d macos
 ```
 
-On macOS, you can open the application with a specific directory in two primary ways:
-
-1.  **Drag and Drop:** Drag a folder from Finder and drop it onto the `Media Browser.app` icon.
-2.  **Command Line:** Use the `open` command with the `-a` flag, followed by the application path and the directory path you wish to open.
+### Build Release App
 
 ```bash
-# Example: Open the app with the '~/Pictures' directory
+# macOS
+flutter build macos --release
+
+# Linux
+flutter build linux --release
+```
+
+The macOS application bundle will be created at `build/macos/Build/Products/Release/Media Browser.app`.
+
+---
+
+## Key Features
+
+- **Multi-Layout View Modes:**
+  - **Categories View (`Cmd+1`):** Traditional grouped horizontal carousels by MIME type.
+  - **Grid View (`Cmd+2`):** Responsive desktop card grid with thumbnail previews and file badges.
+  - **List View (`Cmd+3`):** Compact details list showing filenames, formatted file sizes, file types, and modification timestamps.
+- **Real-Time Search & Category Chips:**
+  - Instant live search bar (`Cmd+F`) matching file names and extensions.
+  - Fast category filter chips: `All`, `Images`, `Videos`, `Audio`, `Documents`, `Code & Text`, and `Other`.
+- **Sorting Options:**
+  - Sort by Date Modified (Newest/Oldest), Name (A–Z / Z–A), File Size (Largest/Smallest), or File Type.
+- **Interactive Lightbox Viewer:**
+  - Full-screen / modal media dialog with previous (`←`) and next (`→`) carousel navigation.
+  - Interactive zoomable image viewer.
+  - Video player with play/pause, seek slider, and full-screen controls.
+  - Audio player with timeline slider, elapsed/total time, and playback controls.
+  - Markdown renderer and multi-language syntax highlighter (Dart, Python, Rust, Swift, C/C++, JavaScript, JSON, YAML).
+  - Quick action toolbar: **Reveal in Finder** (`open -R`), **Open with Default App** (`open`), and **Copy File Path**.
+  - Collapsible metadata inspector.
+- **Live Directory Watching:**
+  - Automatically updates file lists and the sidebar hierarchy when files are added, modified, or deleted on disk.
+- **Collapsible Directory Sidenav:**
+  - Hierarchical folder navigation tree with subfolder drilldown and filter scoping.
+- **Adaptive Theme:**
+  - Follows macOS/system light and dark appearance with one-click manual toggle.
+
+---
+
+## Supported Formats
+
+| Category | Extensions | Viewer Capabilities |
+|---|---|---|
+| **Images** | `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`, `.svg`, `.ico` | GPU-accelerated thumbnails, interactive zoom/pan |
+| **Videos** | `.mp4`, `.mov`, `.avi`, `.mkv`, `.webm`, `.m4v` | Cached video frame thumbnails, in-app video player with scrubbing |
+| **Audio** | `.mp3`, `.wav`, `.aac`, `.m4a`, `.flac`, `.ogg` | Audio player with waveform controls and time scrubber |
+| **Documents** | `.pdf`, `.doc`, `.docx`, `.xls`, `.xlsx`, `.csv` | Document badges and file inspection |
+| **Code & Text** | `.md`, `.json`, `.yaml`, `.yml`, `.dart`, `.py`, `.rs`, `.swift`, `.js`, `.ts`, `.cpp`, `.c`, `.h`, `.sql`, `.toml`, `.xml`, `.log`, `.txt` | Rich Markdown rendering & syntax-highlighted code viewer |
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| <kbd>Cmd</kbd> + <kbd>O</kbd> / <kbd>Ctrl</kbd> + <kbd>O</kbd> | Open directory picker |
+| <kbd>Cmd</kbd> + <kbd>F</kbd> / <kbd>Ctrl</kbd> + <kbd>F</kbd> | Focus real-time search bar |
+| <kbd>Cmd</kbd> + <kbd>R</kbd> / <kbd>Ctrl</kbd> + <kbd>R</kbd> | Refresh current directory |
+| <kbd>Cmd</kbd> + <kbd>1</kbd> | Switch to **Categories** view |
+| <kbd>Cmd</kbd> + <kbd>2</kbd> | Switch to **Grid** view |
+| <kbd>Cmd</kbd> + <kbd>3</kbd> | Switch to **List** view |
+| <kbd>←</kbd> / <kbd>→</kbd> *(in Lightbox)* | Navigate to previous / next media file |
+| <kbd>Esc</kbd> *(in Lightbox)* | Close viewer dialog |
+
+---
+
+## macOS Integration & Sandboxing
+
+The application runs inside the macOS App Sandbox (`com.apple.security.files.user-selected.read-write`).
+
+To open a specific directory on launch:
+
+1. **Drag and Drop:** Drag any folder from Finder directly onto the `Media Browser.app` Dock or application icon.
+2. **Command Line:** Use macOS `open` with user-granted directory scope:
+
+```bash
+# Open app with a specific folder
 open -a "/Applications/Media Browser.app" ~/Pictures
 ```
 
-**Note on macOS Sandboxing:** The application is sandboxed, which is a security feature of macOS. This means it can only access files and folders that you explicitly grant permission for. Passing a directory as a command-line flag (`--args`) will not work because the sandbox prevents the app from accessing arbitrary paths without direct user consent. The methods above (Drag and Drop, `open -a`) are the correct, platform-idiomatic ways to provide this consent at launch.
+> [!NOTE]
+> Passing directory paths via command-line arguments (e.g. `--args /path`) is restricted by the macOS sandbox. Use `open -a` or the in-app picker to ensure proper sandbox access.
 
-### Linux (e.g., on a Chromebook with Crostini)
+---
 
-**Prerequisites:**
+## Development & Testing
 
-Ensure you have the following development libraries and tools installed. On Debian/Ubuntu-based systems, you can use:
+### Prerequisites
 
-```bash
-sudo apt-get update && sudo apt-get install -y \
-    clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
-    libasound2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
-    zenity
-```
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (`^3.29.0` or compatible)
+- macOS Xcode developer tools (for macOS builds)
+- Linux build prerequisites (for Linux builds):
+  ```bash
+  sudo apt-get update && sudo apt-get install -y \
+      clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
+      libasound2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev zenity
+  ```
 
-*   `clang`, `cmake`, `ninja-build`, `pkg-config`, `libgtk-3-dev`, `liblzma-dev`: General Flutter Linux build dependencies.
-*   `libasound2-dev`, `libgstreamer1.0-dev`, `libgstreamer-plugins-base1.0-dev`: For audio playback capabilities via the `audioplayers` plugin.
-*   `zenity`: For native file/directory picker dialogs used by the `file_picker` plugin.
+### Quality Gates
 
-**Building:**
-
-1.  **Enable Linux platform support** (if not already done):
-    ```bash
-    flutter create --platforms linux .
-    ```
-2.  **Get dependencies:**
-    ```bash
-    flutter pub get
-    ```
-3.  **Build the release application:**
-    ```bash
-    flutter build linux --release
-    ```
-    If you encounter build issues related to install paths, try cleaning first:
-    ```bash
-    flutter clean && flutter build linux --release
-    ```
-
-**Running:**
-
-The executable will be located at `build/linux/x64/release/bundle/media_browser_app`.
-Run it from the project root directory:
+Run analyzer and tests:
 
 ```bash
-./build/linux/x64/release/bundle/media_browser_app
+# Analyze codebase
+flutter analyze
+
+# Run all unit and widget tests
+flutter test
+
+# Run macOS debug build
+flutter build macos --debug
 ```
 
-# License
-Apache 2.0; see LICENSE for details.
+For developer architecture guides, see [`DEVELOPERS.md`](DEVELOPERS.md).
 
-# Disclaimer
+---
+
+## Performance Architecture
+
+- **Low-Memory Asset Streaming:** Uses lightweight metadata objects instead of eagerly reading whole byte arrays into Dart memory. Thumbnails are decoded directly on the GPU layer via `cacheWidth` and `cacheHeight`.
+- **LRU Video Thumbnail Cache:** Caches generated video frame thumbnails in memory with automatic eviction.
+- **Background Isolate Scanning:** Directory traversal and stat fetching run in a background isolate via `compute()` to prevent main UI thread stutters.
+- **Directory Stream Watching:** Efficient `DirectoryWatcher` streams trigger incremental refreshes on file system events.
+
+---
+
+## Contributing
+
+Contributions, bug reports, and feature suggestions are welcome!
+
+1. Fork the repository and create your feature branch: `git checkout -b feature/my-feature`.
+2. Ensure all quality gates pass: `flutter analyze && flutter test`.
+3. Commit your changes and open a Pull Request.
+
+Please see [`DEVELOPERS.md`](DEVELOPERS.md) for architecture details and [`AGENTS.md`](AGENTS.md) for agent guidelines.
+
+---
+
+## License
+
+Apache 2.0; see [`LICENSE`](LICENSE) for details.
+
+### Disclaimer
 This project is not an official Google project. It is not supported by Google and Google specifically disclaims all warranties as to its quality, merchantability, or fitness for a particular purpose.

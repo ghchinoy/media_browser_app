@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Saturday, August 29, 2026
+
+#### Added
+- **Multi-Layout View Modes:** Added responsive Grid view (`Cmd+2`), detail List view (`Cmd+3`), alongside classic Category Carousels (`Cmd+1`).
+- **Real-Time Search & Filtering:** Added instant filename/extension search bar (`Cmd+F`) and category filter chips (`All`, `Images`, `Videos`, `Audio`, `Documents`, `Code & Text`, `Other`).
+- **Sorting Support:** Added sort options by Date Modified (Newest/Oldest), Name (A-Z/Z-A), Size (Largest/Smallest), and File Type.
+- **Lightbox Carousel & Quick Actions:** Added previous/next keyboard and button navigation in `MediaDetailDialog`, "Reveal in Finder" (`open -R`), "Open with Default App" (`open`), and "Copy File Path" to clipboard.
+- **Syntax Highlighting & Markdown Viewer:** Upgraded Markdown rendering with `flutter_markdown_plus` and added multi-language code/data syntax viewer (`flutter_syntax_view`) for Dart, Python, Rust, Swift, JavaScript, C/C++, JSON, and YAML.
+- **Desktop Keyboard Shortcuts:** Added `Cmd+O` (Open), `Cmd+F` (Search), `Cmd+R` (Refresh), `Cmd+1/2/3` (View Modes), and `←`/`→`/`Esc` in the Lightbox viewer.
+- **Automated Tests:** Added test suites covering `determineCategory`, `sortMediaFiles`, sorting orders, and widget smoke/theme tests.
+
+#### Changed
+- **Memory & Performance Optimization:** Replaced eager byte reading with lightweight `MediaFile` descriptors and GPU-layer `cacheWidth`/`cacheHeight` decoding, eliminating memory bloat on large media folders.
+- **Video Thumbnail Cache:** Implemented LRU in-memory cache for video thumbnails.
+- **Package Updates:** Upgraded to `flutter_markdown_plus: ^1.0.12` and removed discontinued packages.
+
+---
+
 ### Saturday, June 7, 2025
 
 #### Fixed
@@ -23,7 +41,5 @@ All notable changes to this project will be documented in this file.
 
 #### Changed
 - Refactored file and directory scanning to run in a background isolate using `compute`, preventing the UI from freezing when loading large directories.
-- Image file bytes are now read in the background isolate and cached in memory, significantly improving UI performance and responsiveness.
-- Switched from `Image.file` to the `cached_memory_image` package for image previews to implement a more robust in-memory caching strategy, improving scrolling performance.
 - File metadata (like modification time) is now fetched asynchronously when the directory is scanned, rather than synchronously within the build method.
 - Restored the categorized, row-based layout for media files while ensuring performant lazy-loading of horizontal lists.
