@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:mime/mime.dart';
+import 'package:path/path.dart' as p;
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:watcher/watcher.dart';
 import 'package:logging/logging.dart';
@@ -55,7 +56,7 @@ enum SortOption {
 /// Helper function to determine the [MediaCategory] from file path and optional MIME type.
 MediaCategory determineCategory(String filePath, [String? explicitMimeType]) {
   final mime = explicitMimeType ?? lookupMimeType(filePath) ?? '';
-  final ext = filePath.contains('.') ? filePath.split('.').last.toLowerCase() : '';
+  final ext = p.extension(filePath).replaceFirst('.', '').toLowerCase();
 
   if (mime.startsWith('image/')) return MediaCategory.image;
   if (mime.startsWith('video/')) return MediaCategory.video;
@@ -146,8 +147,8 @@ class MediaFile {
   ])  : mimeType = explicitMimeType ?? lookupMimeType(file.path) ?? 'application/octet-stream',
         category = explicitCategory ?? determineCategory(file.path, explicitMimeType);
 
-  String get name => file.path.split(Platform.pathSeparator).last;
-  String get extension => file.path.contains('.') ? file.path.split('.').last.toLowerCase() : '';
+  String get name => p.basename(file.path);
+  String get extension => p.extension(file.path).replaceFirst('.', '').toLowerCase();
   int get size => stat.size;
   DateTime get modified => stat.modified;
 }
@@ -160,7 +161,7 @@ class DirectoryNode {
 
   DirectoryNode(this.directory, this.children, {this.isExpanded = false});
 
-  String get name => directory.path.split(Platform.pathSeparator).last;
+  String get name => p.basename(directory.path);
 }
 
 /// Holds all scanned media data for a directory.
@@ -241,7 +242,7 @@ Future<Map<String, List<MediaFile>>> _loadMediaFiles(String path) async {
     await for (final entity in directory.list(recursive: true, followLinks: false)) {
       try {
         if (entity is File) {
-          final fileName = entity.path.split(Platform.pathSeparator).last;
+          final fileName = p.basename(entity.path);
           if (fileName.startsWith('.')) {
             // Ignore hidden files like .DS_Store, .git, etc.
             continue;
@@ -294,7 +295,7 @@ Future<DirectoryNode> _buildNode(Directory dir) async {
     final List<FileSystemEntity> entities = await dir.list(followLinks: false).toList();
     for (final entity in entities) {
       if (entity is Directory) {
-        final dirName = entity.path.split(Platform.pathSeparator).last;
+        final dirName = p.basename(entity.path);
         if (!dirName.startsWith('.')) {
           children.add(await _buildNode(entity));
         }

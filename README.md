@@ -30,6 +30,17 @@ Originally designed to streamline reviewing generated media from the [Gemini CLI
 
 ## Quickstart
 
+### Quick Commands (Makefile)
+
+```bash
+make help           # View all available make targets
+make run            # Run app on macOS in debug mode
+make build          # Build release macOS .app bundle
+make install        # Install release app to /Applications/Media Browser.app
+make test           # Run all unit and widget tests
+make clean          # Clean build artifacts and caches
+```
+
 ### Run with Flutter
 
 Clone the repository and launch the app:

@@ -77,11 +77,12 @@ Controllers for `VideoPlayerController` and `AudioPlayer` are initialized in `in
 ---
 
 ## 6. Testing & Quality Gates
-
+ 
 Run the test suite and analyzer:
-
+ 
 ```bash
-flutter analyze
-flutter test
-flutter build macos --debug
+make analyze       # or flutter analyze
+make test          # or flutter test
+make check         # runs analyze and test
+make build-macos   # or flutter build macos --release
 ```

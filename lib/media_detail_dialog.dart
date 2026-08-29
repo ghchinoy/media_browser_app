@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:mime/mime.dart';
+import 'package:path/path.dart' as p;
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_syntax_view/flutter_syntax_view.dart';
 import 'package:logging/logging.dart';
@@ -62,10 +63,8 @@ class _MediaDetailDialogState extends State<MediaDetailDialog> {
   FileSystemEntity get _currentEntity => _files[_currentIndex];
   File get _currentFile => File(_currentEntity.path);
   String get _mimeType => lookupMimeType(_currentEntity.path) ?? 'application/octet-stream';
-  String get _fileName => _currentEntity.path.split(Platform.pathSeparator).last;
-  String get _extension => _currentEntity.path.contains('.')
-      ? _currentEntity.path.split('.').last.toLowerCase()
-      : '';
+  String get _fileName => p.basename(_currentEntity.path);
+  String get _extension => p.extension(_currentEntity.path).replaceFirst('.', '').toLowerCase();
 
   @override
   void initState() {

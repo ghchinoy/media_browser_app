@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:media_browser_app/media_service.dart';
 
 void main() {
@@ -54,15 +55,15 @@ void main() {
     setUp(() async {
       tempDir = await Directory.systemTemp.createTemp('media_browser_test_');
 
-      final fileA = File('${tempDir.path}/alpha.png');
+      final fileA = File(p.join(tempDir.path, 'alpha.png'));
       await fileA.writeAsString('small');
       final statA = await fileA.stat();
 
-      final fileB = File('${tempDir.path}/beta.mp4');
+      final fileB = File(p.join(tempDir.path, 'beta.mp4'));
       await fileB.writeAsString('medium medium');
       final statB = await fileB.stat();
 
-      final fileC = File('${tempDir.path}/charlie.dart');
+      final fileC = File(p.join(tempDir.path, 'charlie.dart'));
       await fileC.writeAsString('large large large large');
       final statC = await fileC.stat();
 
